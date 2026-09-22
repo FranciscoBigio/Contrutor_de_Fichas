@@ -1,0 +1,36 @@
+name: CI - Integridade e Validação
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  validate:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Clonar repositório
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'francisco-bigio/package-lock.json'
+
+      - name: 📦 Instalar dependências
+        working-directory: francisco-bigio
+        run: npm ci
+
+      - name: 🔍 Verificação de tipos TypeScript
+        working-directory: francisco-bigio
+        run: npx tsc --noEmit
+
+      - name: 🧹 Análise estática (Linter)
+        working-directory: francisco-bigio
+        run: npm run lint
+

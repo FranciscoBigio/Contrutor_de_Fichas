@@ -1,34 +1,82 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+# ==========================================
+# Git Ignore - Expo / React Native Project
+# ==========================================
 
 # dependencies
+# Dependencies
 node_modules/
+package-lock.json.bak
+yarn.lock.bak
 
 # Expo
+# Expo & Builds
 .expo/
 dist/
 web-build/
 expo-env.d.ts
 
 # Native
+# Native builds (Continuous Native Generation)
+/ios
+/android
 .kotlin/
 *.orig.*
+
+# Certificates, Keys and Sensitive Credentials
 *.jks
+*.keystore
 *.p8
 *.p12
 *.key
+*.pem
 *.mobileprovision
+credentials.json
+# Uncomment below if you want to keep service accounts/configs strictly local
+# google-services.json
+# GoogleService-Info.plist
 
 # Metro
+# Environment Variables (Keep .env.example tracked)
+.env
+.env.*
+*.env
+!.env.example
+
+# Metro Bundler & Caches
 .metro-health-check*
+*.tsbuildinfo
 
 # debug
+# Debug & Error logs
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+pnpm-debug.*
+*.log
 
 # macOS
+# IDE & Editor files
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Operating System files
 .DS_Store
 *.pem
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
 # local env files
 .env*.local
@@ -41,3 +89,6 @@ example
 # generated native folders
 /ios
 /android
+# Agent / Tooling local cache
+.agents/
+skills-lock.json

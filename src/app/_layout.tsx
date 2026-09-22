@@ -1,18 +1,34 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
-
-SplashScreen.preventAutoHideAsync();
-
-export default function TabLayout() {
+export default function RootLayout() {
   const colorScheme = useColorScheme();
+
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
+      <Stack
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: colorScheme === 'dark' ? '#12141A' : '#1A202C',
+          },
+          headerTintColor: '#E2E8F0',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+          contentStyle: {
+            backgroundColor: colorScheme === 'dark' ? '#0B0D12' : '#F7FAFC',
+          },
+        }}
+      >
+        <Stack.Screen
+          name="index"
+          options={{
+            title: '⚔️ QuestSheet RPG',
+          }}
+        />
+      </Stack>
+      <StatusBar style="light" />
     </ThemeProvider>
   );
 }
