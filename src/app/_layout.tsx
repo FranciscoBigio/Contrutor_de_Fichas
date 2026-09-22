@@ -93,6 +93,13 @@ function RootNavigator() {
             headerBackTitle: 'Ficha',
           }}
         />
+        <Stack.Screen
+          name="character/[id]/bio"
+          options={{
+            title: '📜 Biografia & Habilidades',
+            headerBackTitle: 'Ficha',
+          }}
+        />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </>

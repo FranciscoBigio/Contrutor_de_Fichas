@@ -762,10 +762,16 @@ export default function CharacterInventoryScreen() {
             style={{ flex: 1 }}
           />
           <RPGButton
-            title="Ficha Geral 📜"
+            title="Ficha ⚔️"
             variant="secondary"
             onPress={() => router.push(`/character/${character.id}` as any)}
-            style={{ flex: 1 }}
+            style={{ flex: 0.8 }}
+          />
+          <RPGButton
+            title="Biografia (Tela 10) 📜 ➡️"
+            variant="primary"
+            onPress={() => router.push(`/character/${character.id}/bio` as any)}
+            style={{ flex: 1.2 }}
           />
         </View>
       </ScrollView>

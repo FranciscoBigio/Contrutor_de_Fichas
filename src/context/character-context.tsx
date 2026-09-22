@@ -6,8 +6,10 @@ import {
   Attributes,
   calculateModifier,
   Character,
+  CharacterBio,
   Coins,
   CombatCondition,
+  FeatureTrait,
   InventoryItem,
   Spell,
   SpellcastingData,
@@ -49,6 +51,9 @@ interface CharacterContextData {
   removeItem: (charId: string, itemId: string) => Promise<void>;
   updateCoins: (charId: string, coins: Coins) => Promise<void>;
   updateItemQuantity: (charId: string, itemId: string, delta: number) => Promise<void>;
+  updateBio: (charId: string, bioUpdates: Partial<CharacterBio>) => Promise<void>;
+  addFeature: (charId: string, feature: Omit<FeatureTrait, 'id'>) => Promise<void>;
+  removeFeature: (charId: string, featureId: string) => Promise<void>;
   resetToMock: () => Promise<void>;
 }
 
@@ -500,6 +505,36 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     await updateCharacter(charId, { inventory: updatedInv });
   };
 
+  const updateBio = async (charId: string, bioUpdates: Partial<CharacterBio>) => {
+    const target = characters.find((c) => c.id === charId);
+    if (!target) return;
+
+    const updatedBio: CharacterBio = {
+      ...target.bio,
+      ...bioUpdates,
+    };
+    await updateCharacter(charId, { bio: updatedBio });
+  };
+
+  const addFeature = async (charId: string, feature: Omit<FeatureTrait, 'id'>) => {
+    const target = characters.find((c) => c.id === charId);
+    if (!target) return;
+
+    const newFeature: FeatureTrait = {
+      ...feature,
+      id: `feat-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    };
+    await updateCharacter(charId, { features: [...target.features, newFeature] });
+  };
+
+  const removeFeature = async (charId: string, featureId: string) => {
+    const target = characters.find((c) => c.id === charId);
+    if (!target) return;
+
+    const updatedFeatures = target.features.filter((f) => f.id !== featureId);
+    await updateCharacter(charId, { features: updatedFeatures });
+  };
+
   const resetToMock = async () => {
     await persistCharacters(MOCK_CHARACTERS);
     if (MOCK_CHARACTERS.length > 0) {
@@ -538,6 +573,9 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         removeItem,
         updateCoins,
         updateItemQuantity,
+        updateBio,
+        addFeature,
+        removeFeature,
         resetToMock,
       }}
     >

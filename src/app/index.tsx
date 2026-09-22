@@ -30,7 +30,7 @@ const PLANNED_SCREENS = [
   { id: '7', title: '7. Perícias & Salvaguardas (PRONTA)', desc: '18 perícias clássicas do D&D 5e com cálculo de bônus, maestria e sentidos passivos', icon: '🎯', ready: true, route: '/character/hero-1/skills' },
   { id: '8', title: '8. Grimório & Magias (PRONTA)', desc: 'Controle de Spell Slots por círculo, magias preparadas e conjuração', icon: '🔮', ready: true, route: '/character/char-elora-03/spells' },
   { id: '9', title: '9. Inventário & Equipamentos (PRONTA)', desc: 'Mochila, armas com rolagem de dano, bolsa de 5 moedas (PO/PP/PC) e capacidade de carga D&D 5e', icon: '🎒', ready: true, route: '/character/hero-1/inventory' },
-  { id: '10', title: '10. Biografia & Habilidades', desc: 'História, características de raça/classe, traços e talentos', icon: '📜', ready: false },
+  { id: '10', title: '10. Biografia & Habilidades (PRONTA)', desc: 'História, características de raça/classe, traços de personalidade, ideais, vínculos, defeitos e notas', icon: '📜', ready: true, route: '/character/hero-1/bio' },
   { id: '11', title: '11. Rolador de Dados Integrado', desc: 'Rolagens de d4 a d100 com cálculo de modificador e histórico', icon: '🎲', ready: false },
 ];
 
@@ -67,12 +67,12 @@ export default function HomeScreen() {
 
         {/* Hero Card do Projeto */}
         <RPGCard variant="highlight" style={styles.heroCard}>
-          <RPGBadge label="COMMIT #16 • v0.16.0 • INVENTÁRIO & EQUIPAMENTOS (9/11 TELAS)" variant="gold" />
+          <RPGBadge label="COMMIT #17 • v0.17.0 • BIOGRAFIA & HABILIDADES (10/11 TELAS)" variant="gold" />
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             ⚔️ QuestSheet RPG
           </Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            A Tela 9 (Inventário, Equipamentos & Moedas) foi finalizada com capacidade de carga D&D 5e, tesouraria com 5 moedas, equipar itens e rolagem de dano!
+            A Tela 10 (Biografia, Traços & Habilidades) foi finalizada com os 4 pilares do D&D 5e, histórico, características de raça/classe e diário de campanha!
           </Text>
 
           {/* Card de Sessão do Usuário */}
@@ -124,24 +124,31 @@ export default function HomeScreen() {
           />
 
           <View style={styles.tagRow}>
-            <RPGBadge label="SemVer v0.16.0" variant="hp" size="sm" />
-            <RPGBadge label="Inventário & Moedas" variant="mana" size="sm" />
-            <RPGBadge label="Telas 9/11 Concluídas" variant="gold" size="sm" />
+            <RPGBadge label="SemVer v0.17.0" variant="hp" size="sm" />
+            <RPGBadge label="Biografia & Habilidades" variant="mana" size="sm" />
+            <RPGBadge label="Telas 10/11 Concluídas" variant="gold" size="sm" />
           </View>
         </RPGCard>
 
-        {/* Atalhos Rápidos para as 9 Telas Concluídas */}
+        {/* Atalhos Rápidos para as 10 Telas Concluídas */}
         <RPGCard style={styles.actionCard}>
           <Text style={[styles.actionTitle, { color: theme.text }]}>
-            🚀 Atalhos para as Telas Prontas (9 de 11)
+            🚀 Atalhos para as Telas Prontas (10 de 11)
           </Text>
           <Text style={[styles.actionDesc, { color: theme.textSecondary }]}>
             Navegue pelas telas já construídas com base no padrão Stack e Context API:
           </Text>
           <View style={{ gap: Spacing.xs }}>
             <RPGButton
-              title="🎒 Abrir Tela 9: Inventário & Mochila"
+              title="📜 Abrir Tela 10: Biografia & Habilidades"
               variant="primary"
+              icon="✨"
+              onPress={() => router.push((activeCharacter ? `/character/${activeCharacter.id}/bio` : '/character/hero-1/bio') as any)}
+              style={{ width: '100%' }}
+            />
+            <RPGButton
+              title="🎒 Abrir Tela 9: Inventário & Mochila"
+              variant="secondary"
               icon="⚔️"
               onPress={() => router.push((activeCharacter ? `/character/${activeCharacter.id}/inventory` : '/character/hero-1/inventory') as any)}
               style={{ width: '100%' }}
@@ -149,7 +156,7 @@ export default function HomeScreen() {
             <RPGButton
               title="🔮 Abrir Tela 8: Grimório & Magias"
               variant="secondary"
-              icon="✨"
+              icon="🔮"
               onPress={() => router.push((activeCharacter ? `/character/${activeCharacter.id}/spells` : '/character/char-elora-03/spells') as any)}
               style={{ width: '100%' }}
             />
@@ -388,16 +395,16 @@ export default function HomeScreen() {
             ✅ Checklist do Repositório (Prof. Garrido)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commits 01 a 15 concluídos e sincronizados no GitHub
+            ✔ Commits 01 a 16 concluídos e sincronizados no GitHub
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commit 16 pronto: Tela 9 — Inventário, Equipamentos, Moedas (PO/PP/PC) e Carga D&D 5e (v0.16.0)
+            ✔ Commit 17 pronto: Tela 10 — Biografia, Traços de Personalidade, Ideais, Vínculos, Defeitos & Talentos (v0.17.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ 9 de 11 telas concluídas e navegáveis com arquitetura em 3 camadas
+            ✔ 10 de 11 telas concluídas e navegáveis com arquitetura em 3 camadas
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Próximo: Tela 10 — Biografia, Traços de Personalidade & Antecedentes (Commit 17 / v0.17.0)
+            ✔ Próximo: Tela 11 — Rolador de Dados Poliédricos Integrado (Commit 18)
           </Text>
         </RPGCard>
       </ScrollView>
