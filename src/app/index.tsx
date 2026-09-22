@@ -19,9 +19,9 @@ import { useTheme } from '@/context/theme-context';
 
 const PLANNED_SCREENS = [
   // Módulo 1: Autenticação & Acesso
-  { id: '1', title: '1. Login do Aventureiro (PRONTA)', desc: 'Acesso seguro com validações e token JWT via SecureStore', icon: '🔐', ready: true },
-  { id: '2', title: '2. Cadastro de Conta', desc: 'Registro de novo aventureiro (jogador/mestre) com validações', icon: '📝', ready: false },
-  { id: '3', title: '3. Recuperação de Senha', desc: 'Formulário de redefinição de acesso para recuperação de credenciais', icon: '🔑', ready: false },
+  { id: '1', title: '1. Login do Aventureiro (PRONTA)', desc: 'Acesso seguro com validações e token JWT via SecureStore', icon: '🔐', ready: true, route: '/auth/login' },
+  { id: '2', title: '2. Cadastro de Conta (PRONTA)', desc: 'Registro com perfil de Mestre ou Jogador e persistência no SecureStore', icon: '📝', ready: true, route: '/auth/register' },
+  { id: '3', title: '3. Recuperação de Senha', desc: 'Formulário de redefinição de acesso para recuperação de credenciais', icon: '🔑', ready: false, route: '/auth/forgot-password' },
   // Módulo 2: Gerenciamento & Ficha do RPG
   { id: '4', title: '4. Meus Personagens (HUB)', desc: 'Dashboard com lista de heróis, status, busca e filtros', icon: '🛡️', ready: false },
   { id: '5', title: '5. Criação de Herói', desc: 'Formulário em etapas (raça, classe, atributos e avatar)', icon: '✨', ready: false },
@@ -65,12 +65,12 @@ export default function HomeScreen() {
 
         {/* Hero Card do Projeto */}
         <RPGCard variant="highlight" style={styles.heroCard}>
-          <RPGBadge label="COMMIT #04 • v0.4.0 • TELA DE LOGIN PRONTA" variant="gold" />
+          <RPGBadge label="COMMIT #05 • v0.5.0 • TELA DE CADASTRO PRONTA" variant="gold" />
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             ⚔️ QuestSheet RPG
           </Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            Primeira tela do app implementada com validações visuais e segurança OWASP M2 (SecureStore)!
+            Duas telas do fluxo de autenticação concluídas com validações e segurança OWASP M2 (SecureStore)!
           </Text>
 
           {/* Card de Sessão do Usuário */}
@@ -79,10 +79,10 @@ export default function HomeScreen() {
               <View style={styles.sessionContent}>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.sessionGreeting, { color: theme.text }]}>
-                    👑 Aventureiro: <Text style={{ color: theme.primary, fontWeight: 'bold' }}>{user.name}</Text>
+                    👑 {user.role === 'master' ? 'Mestre da Masmorra' : 'Aventureiro'}: <Text style={{ color: theme.primary, fontWeight: 'bold' }}>{user.name}</Text>
                   </Text>
                   <Text style={[styles.sessionEmail, { color: theme.textSecondary }]}>
-                    {user.email} (Sessão criptografada no SecureStore)
+                    {user.email} (Sessão salva no SecureStore)
                   </Text>
                 </View>
                 <RPGButton
@@ -99,7 +99,7 @@ export default function HomeScreen() {
                     Sessão: Não Autenticado
                   </Text>
                   <Text style={[styles.sessionEmail, { color: theme.textSecondary }]}>
-                    Acesse a Tela 1 para testar o fluxo de login
+                    Cadastre-se ou entre para salvar seus heróis
                   </Text>
                 </View>
                 <RPGButton
@@ -122,28 +122,36 @@ export default function HomeScreen() {
           />
 
           <View style={styles.tagRow}>
-            <RPGBadge label="SemVer v0.4.0" variant="hp" size="sm" />
+            <RPGBadge label="SemVer v0.5.0" variant="hp" size="sm" />
             <RPGBadge label="OWASP M2 SecureStore" variant="mana" size="sm" />
-            <RPGBadge label="Tela 1/11 Concluída" variant="gold" size="sm" />
+            <RPGBadge label="Telas 2/11 Concluídas" variant="gold" size="sm" />
           </View>
         </RPGCard>
 
-        {/* Botão de Destaque para a Tela de Login */}
+        {/* Atalhos Rápidos para as Telas Concluídas */}
         <RPGCard style={styles.actionCard}>
           <Text style={[styles.actionTitle, { color: theme.text }]}>
-            🚀 Teste a Tela 1 de 11: Login do Aventureiro
+            🚀 Teste as Telas Prontas do Fluxo de Acesso
           </Text>
           <Text style={[styles.actionDesc, { color: theme.textSecondary }]}>
-            Tela completa construída com validações de e-mail e senha, atalhos para cadastro/esqueci a senha e persistência em SecureStore:
+            Navegue entre as telas pelo padrão Stack conforme ensinado na Aula 3:
           </Text>
-          <RPGButton
-            title="Ir para a Tela de Login (auth/login)"
-            variant="primary"
-            icon="🔐"
-            size="lg"
-            onPress={() => router.push('/auth/login' as any)}
-            style={{ width: '100%', marginTop: Spacing.xs }}
-          />
+          <View style={styles.actionBtnRow}>
+            <RPGButton
+              title="Tela 1: Login"
+              variant="primary"
+              icon="🔐"
+              onPress={() => router.push('/auth/login' as any)}
+              style={{ flex: 1 }}
+            />
+            <RPGButton
+              title="Tela 2: Cadastro"
+              variant="secondary"
+              icon="📝"
+              onPress={() => router.push('/auth/register' as any)}
+              style={{ flex: 1 }}
+            />
+          </View>
         </RPGCard>
 
         {/* As 3 Camadas de Arquitetura (Slide 5 da Aula 3) */}
@@ -156,21 +164,21 @@ export default function HomeScreen() {
               <Text style={styles.layerIcon}>🖥️</Text>
               <Text style={[styles.layerTitle, { color: theme.text }]}>1. Apresentação (UI)</Text>
               <Text style={[styles.layerDesc, { color: theme.textSecondary }]}>
-                Tela de Login (`auth/login.tsx`) com componentes atômicos: RPGButton, RPGInput, RPGPasswordInput e RPGCard.
+                Telas de Login e Cadastro modulares, estilizadas com Flexbox e prontas para modo Dark e Pergaminho.
               </Text>
             </RPGCard>
             <RPGCard style={styles.layerCard}>
               <Text style={styles.layerIcon}>🧠</Text>
               <Text style={[styles.layerTitle, { color: theme.text }]}>2. Estado (Local × Global)</Text>
               <Text style={[styles.layerDesc, { color: theme.textSecondary }]}>
-                AuthContext global gerencia o usuário logado; useState local gerencia o formulário e visibilidade de senha.
+                AuthContext global com métodos login/register; useState local em cada formulário.
               </Text>
             </RPGCard>
             <RPGCard style={styles.layerCard}>
               <Text style={styles.layerIcon}>💾</Text>
               <Text style={[styles.layerTitle, { color: theme.text }]}>3. Dados & Resiliência</Text>
               <Text style={[styles.layerDesc, { color: theme.textSecondary }]}>
-                Tokens JWT salvos com segurança via SecureStore (OWASP M2) no Keychain (iOS) e Keystore (Android).
+                Criptografia no SecureStore (Keychain/Keystore) para tokens e dados de sessão (OWASP M2).
               </Text>
             </RPGCard>
           </View>
@@ -187,7 +195,7 @@ export default function HomeScreen() {
                 key={item.id}
                 variant={item.ready ? 'highlight' : 'default'}
                 style={styles.screenCard}
-                onPress={item.ready ? () => router.push('/auth/login' as any) : undefined}
+                onPress={item.ready && item.route ? () => router.push(item.route as any) : undefined}
               >
                 <Text style={styles.screenIcon}>{item.icon}</Text>
                 <View style={styles.screenTextContainer}>
@@ -217,10 +225,13 @@ export default function HomeScreen() {
             ✔ Commit 03 efetuado com sucesso (v0.3.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commit 04 pronto: Tela 1 — Login do Aventureiro criada (v0.4.0)
+            ✔ Commit 04 efetuado com sucesso (v0.4.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Próximo: Tela 2 — Cadastro de Conta (Commit 05 - v0.5.0)
+            ✔ Commit 05 pronto: Tela 2 — Cadastro de Jogador criada (v0.5.0)
+          </Text>
+          <Text style={[styles.checkItem, { color: theme.healing }]}>
+            ✔ Próximo: Tela 3 — Recuperação de Senha (Commit 06 - v0.6.0)
           </Text>
         </RPGCard>
       </ScrollView>
@@ -306,6 +317,11 @@ const styles = StyleSheet.create({
   actionDesc: {
     fontSize: 12,
     lineHeight: 16,
+  },
+  actionBtnRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
   },
   section: {
     gap: 10,

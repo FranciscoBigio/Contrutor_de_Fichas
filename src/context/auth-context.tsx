@@ -20,6 +20,7 @@ interface AuthContextData {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, pass: string, role: 'player' | 'master') => Promise<{ success: boolean; error?: string }>;
   loginAsGuest: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -55,7 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, pass: string) => {
-    // Validação básica local antes de simular o ciclo de requisição (Aula 3, Slide 35)
     if (!email.trim() || !pass.trim()) {
       return { success: false, error: 'E-mail e senha são obrigatórios' };
     }
@@ -74,7 +74,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     try {
-      // Armazena com segurança criptografada no Keychain / Keystore (OWASP M2)
       await SecureStore.setItemAsync(TOKEN_KEY, mockJwt);
       await SecureStore.setItemAsync(USER_KEY, JSON.stringify(mockUser));
 
@@ -83,6 +82,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true };
     } catch {
       return { success: false, error: 'Falha ao salvar sessão com segurança' };
+    }
+  };
+
+  const register = async (
+    name: string,
+    email: string,
+    pass: string,
+    role: 'player' | 'master'
+  ) => {
+    if (!name.trim()) {
+      return { success: false, error: 'O nome do aventureiro é obrigatório' };
+    }
+    if (!email.trim() || !pass.trim()) {
+      return { success: false, error: 'E-mail e senha são obrigatórios' };
+    }
+    if (pass.length < 6) {
+      return { success: false, error: 'A senha deve ter no mínimo 6 caracteres' };
+    }
+
+    const mockJwt = `eyJhbGciOiJIUzI1NiJ9.${btoa(JSON.stringify({ email, sub: `user_${Date.now()}` }))}.sig_${Date.now()}`;
+    const newUser: User = {
+      id: String(Date.now()),
+      name: name.trim(),
+      email: email.trim(),
+      role,
+    };
+
+    try {
+      await SecureStore.setItemAsync(TOKEN_KEY, mockJwt);
+      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(newUser));
+
+      setToken(mockJwt);
+      setUser(newUser);
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Falha ao salvar credenciais com segurança no SecureStore' };
     }
   };
 
@@ -125,6 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         isLoading,
         login,
+        register,
         loginAsGuest,
         logout,
       }}
