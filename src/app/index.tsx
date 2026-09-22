@@ -67,12 +67,12 @@ export default function HomeScreen() {
 
         {/* Hero Card do Projeto */}
         <RPGCard variant="highlight" style={styles.heroCard}>
-          <RPGBadge label="COMMIT #20 • v0.20.0 • META DE 20 COMMITS ALCANÇADA!" variant="gold" />
+          <RPGBadge label="COMMIT #21 • v0.21.0 • ORDENAÇÃO E BUSCA REFINADA" variant="gold" />
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             ⚔️ QuestSheet RPG
           </Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            Meta mínima de 20 commits atingida com sucesso! Novo módulo de Backup e Troca de Fichas em JSON offline integrado às 12 telas!
+            Ordenação avançada de itens (Nome A-Z/Z-A, Peso, Raridade, Quantidade), busca refinada e limpeza instantânea na Tela 9 (Inventário)!
           </Text>
 
           {/* Card de Sessão do Usuário */}
@@ -132,9 +132,9 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.tagRow}>
-            <RPGBadge label="SemVer v0.20.0" variant="hp" size="sm" />
-            <RPGBadge label="20 Commits Atingidos" variant="mana" size="sm" />
-            <RPGBadge label="Backup JSON Offline" variant="gold" size="sm" />
+            <RPGBadge label="SemVer v0.21.0" variant="hp" size="sm" />
+            <RPGBadge label="21 Commits Concluídos" variant="mana" size="sm" />
+            <RPGBadge label="Filtros & Ordenação" variant="gold" size="sm" />
           </View>
         </RPGCard>
 
@@ -417,16 +417,16 @@ export default function HomeScreen() {
             ✅ Checklist do Repositório (Prof. Garrido)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commits 01 a 19 concluídos e sincronizados no GitHub
+            ✔ Commits 01 a 20 concluídos e sincronizados no GitHub
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commit 20 pronto: Backup, Exportação e Importação de Fichas em JSON Offline (v0.20.0)
+            ✔ Commit 21 pronto: Ordenação avançada (peso, nome, raridade, qtd) e busca refinada no inventário (v0.21.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ META DE 20 COMMITS ALCANÇADA COM SUCESSO! (Requisito da disciplina atendido)
+            ✔ META DE 20 COMMITS SUPERADA! (21 commits com arquitetura em 3 camadas e 12 telas)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Próximo: Commit 21 — Filtros e ordenação refinada no inventário e grimório
+            ✔ Próximo: Commit 22 — Feedback tátil e animações nas rolagens de dados e combate
           </Text>
         </RPGCard>
       </ScrollView>

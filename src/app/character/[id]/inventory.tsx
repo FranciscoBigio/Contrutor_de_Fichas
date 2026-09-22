@@ -44,6 +44,17 @@ const RARITIES: ('Comum' | 'Incomum' | 'Raro' | 'Muito Raro' | 'Lendário')[] = 
   'Lendário',
 ];
 
+type SortField = 'name' | 'weight' | 'rarity' | 'quantity';
+type SortDirection = 'asc' | 'desc';
+
+const RARITY_WEIGHT: Record<string, number> = {
+  'Lendário': 5,
+  'Muito Raro': 4,
+  'Raro': 3,
+  'Incomum': 2,
+  'Comum': 1,
+};
+
 export default function CharacterInventoryScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -61,10 +72,38 @@ export default function CharacterInventoryScreen() {
 
   const character = (id ? getCharacterById(id) : null) || activeCharacter;
 
-  // Estados de Busca e Filtro
+  // Estados de Busca, Filtro e Ordenação Avançada
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
   const [onlyEquippedFilter, setOnlyEquippedFilter] = useState<boolean>(false);
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  // Alternar campo ou direção de ordenação
+  const handleToggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDirection(field === 'name' ? 'asc' : 'desc');
+    }
+  };
+
+  // Resetar filtros e busca
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('Todas');
+    setOnlyEquippedFilter(false);
+    setSortField('name');
+    setSortDirection('asc');
+  };
+
+  const isFilteredOrSorted =
+    searchQuery.trim().length > 0 ||
+    selectedCategory !== 'Todas' ||
+    onlyEquippedFilter ||
+    sortField !== 'name' ||
+    sortDirection !== 'asc';
 
   // Modal para Adicionar Novo Item
   const [isAddModalVisible, setIsAddModalVisible] = useState<boolean>(false);
@@ -117,10 +156,10 @@ export default function CharacterInventoryScreen() {
     return Math.round(total * 100) / 100;
   }, [character]);
 
-  // Itens filtrados com useMemo
-  const filteredInventory = useMemo(() => {
+  // Itens filtrados e ordenados com useMemo
+  const filteredAndSortedInventory = useMemo(() => {
     if (!character?.inventory) return [];
-    return character.inventory.filter((item) => {
+    const list = character.inventory.filter((item) => {
       const matchQuery =
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -130,7 +169,32 @@ export default function CharacterInventoryScreen() {
 
       return matchQuery && matchCat && matchEquipped;
     });
-  }, [character, searchQuery, selectedCategory, onlyEquippedFilter]);
+
+    return [...list].sort((a, b) => {
+      let diff = 0;
+      if (sortField === 'name') {
+        diff = a.name.localeCompare(b.name, 'pt-BR');
+      } else if (sortField === 'weight') {
+        const aWeight = (a.weight || 0) * (a.quantity || 1);
+        const bWeight = (b.weight || 0) * (b.quantity || 1);
+        diff = aWeight - bWeight;
+      } else if (sortField === 'rarity') {
+        const aR = RARITY_WEIGHT[a.rarity || 'Comum'] || 0;
+        const bR = RARITY_WEIGHT[b.rarity || 'Comum'] || 0;
+        diff = aR - bR;
+      } else if (sortField === 'quantity') {
+        diff = (a.quantity || 1) - (b.quantity || 1);
+      }
+      return sortDirection === 'asc' ? diff : -diff;
+    });
+  }, [
+    character,
+    searchQuery,
+    selectedCategory,
+    onlyEquippedFilter,
+    sortField,
+    sortDirection,
+  ]);
 
   if (!character) {
     return (
@@ -504,23 +568,40 @@ export default function CharacterInventoryScreen() {
           </View>
         </RPGCard>
 
-        {/* Controles de Busca e Filtro de Itens */}
+        {/* Controles de Busca, Filtro e Ordenação Avançada */}
         <RPGCard variant="default" style={styles.filtersCard}>
           <View style={styles.searchRow}>
-            <TextInput
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder="🔍 Buscar item ou descrição..."
-              placeholderTextColor={theme.textSecondary}
+            <View
               style={[
-                styles.searchInput,
+                styles.searchInputWrapper,
                 {
                   backgroundColor: theme.backgroundInput,
-                  color: theme.text,
                   borderColor: theme.border,
                 },
               ]}
-            />
+            >
+              <TextInput
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="🔍 Buscar item ou descrição..."
+                placeholderTextColor={theme.textSecondary}
+                style={[
+                  styles.searchInput,
+                  {
+                    color: theme.text,
+                  },
+                ]}
+              />
+              {searchQuery.trim().length > 0 && (
+                <Pressable
+                  onPress={() => setSearchQuery('')}
+                  style={styles.searchClearBtn}
+                  hitSlop={8}
+                >
+                  <Text style={[styles.searchClearBtnText, { color: theme.textSecondary }]}>✕</Text>
+                </Pressable>
+              )}
+            </View>
             <RPGButton
               title="+ Item"
               variant="primary"
@@ -562,7 +643,7 @@ export default function CharacterInventoryScreen() {
             })}
           </ScrollView>
 
-          {/* Toggle Apenas Equipados */}
+          {/* Toggle Apenas Equipados e Contador */}
           <View style={styles.equippedToggleRow}>
             <Pressable
               onPress={() => setOnlyEquippedFilter(!onlyEquippedFilter)}
@@ -579,33 +660,145 @@ export default function CharacterInventoryScreen() {
               </Text>
             </Pressable>
             <Text style={[styles.itemsCountText, { color: theme.textSecondary }]}>
-              {filteredInventory.length} de {character.inventory.length} itens
+              {filteredAndSortedInventory.length} de {character.inventory.length} itens
             </Text>
+          </View>
+
+          {/* Barra de Ordenação Avançada */}
+          <View style={styles.sortSection}>
+            <View style={styles.sortHeaderRow}>
+              <Text style={[styles.sortSectionTitle, { color: theme.textSecondary }]}>
+                ⚡ Ordenar Mochila:
+              </Text>
+              {isFilteredOrSorted && (
+                <Pressable onPress={handleResetFilters} hitSlop={8}>
+                  <Text style={[styles.resetFilterText, { color: theme.hp }]}>
+                    ↺ Limpar Filtros
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+
+            <View style={styles.sortChipsRow}>
+              {/* Nome */}
+              <Pressable
+                onPress={() => handleToggleSort('name')}
+                style={[
+                  styles.sortChip,
+                  {
+                    backgroundColor: sortField === 'name' ? `${theme.primary}25` : theme.backgroundInput,
+                    borderColor: sortField === 'name' ? theme.primary : theme.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.sortChipText,
+                    { color: sortField === 'name' ? theme.primary : theme.text },
+                  ]}
+                >
+                  🔤 Nome {sortField === 'name' ? (sortDirection === 'asc' ? 'A→Z ▲' : 'Z→A ▼') : ''}
+                </Text>
+              </Pressable>
+
+              {/* Peso */}
+              <Pressable
+                onPress={() => handleToggleSort('weight')}
+                style={[
+                  styles.sortChip,
+                  {
+                    backgroundColor: sortField === 'weight' ? `${theme.primary}25` : theme.backgroundInput,
+                    borderColor: sortField === 'weight' ? theme.primary : theme.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.sortChipText,
+                    { color: sortField === 'weight' ? theme.primary : theme.text },
+                  ]}
+                >
+                  ⚖️ Peso {sortField === 'weight' ? (sortDirection === 'desc' ? 'Maior ▼' : 'Menor ▲') : ''}
+                </Text>
+              </Pressable>
+
+              {/* Raridade */}
+              <Pressable
+                onPress={() => handleToggleSort('rarity')}
+                style={[
+                  styles.sortChip,
+                  {
+                    backgroundColor: sortField === 'rarity' ? `${theme.primary}25` : theme.backgroundInput,
+                    borderColor: sortField === 'rarity' ? theme.primary : theme.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.sortChipText,
+                    { color: sortField === 'rarity' ? theme.primary : theme.text },
+                  ]}
+                >
+                  ✨ Raridade {sortField === 'rarity' ? (sortDirection === 'desc' ? 'Épico ▼' : 'Comum ▲') : ''}
+                </Text>
+              </Pressable>
+
+              {/* Quantidade */}
+              <Pressable
+                onPress={() => handleToggleSort('quantity')}
+                style={[
+                  styles.sortChip,
+                  {
+                    backgroundColor: sortField === 'quantity' ? `${theme.primary}25` : theme.backgroundInput,
+                    borderColor: sortField === 'quantity' ? theme.primary : theme.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.sortChipText,
+                    { color: sortField === 'quantity' ? theme.primary : theme.text },
+                  ]}
+                >
+                  🔢 Qtd {sortField === 'quantity' ? (sortDirection === 'desc' ? '+ ▼' : '- ▲') : ''}
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </RPGCard>
 
         {/* Listagem de Itens */}
-        {filteredInventory.length === 0 ? (
+        {filteredAndSortedInventory.length === 0 ? (
           <RPGCard variant="default" style={styles.emptyCard}>
             <Text style={styles.emptyIcon}>📦</Text>
             <Text style={[styles.emptyTitle, { color: theme.text }]}>
               Nenhum item encontrado
             </Text>
             <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
-              {searchQuery || selectedCategory !== 'Todas' || onlyEquippedFilter
-                ? 'Tente ajustar os filtros ou termo de busca acima.'
+              {isFilteredOrSorted
+                ? 'Nenhum item corresponde aos critérios de busca ou filtros ativos.'
                 : 'A mochila do seu aventureiro está vazia. Adicione itens e armas!'}
             </Text>
-            <RPGButton
-              title="Adicionar Primeiro Item"
-              variant="secondary"
-              size="sm"
-              onPress={() => setIsAddModalVisible(true)}
-              style={{ marginTop: Spacing.sm }}
-            />
+            {isFilteredOrSorted ? (
+              <RPGButton
+                title="↺ Limpar Filtros e Busca"
+                variant="secondary"
+                size="sm"
+                onPress={handleResetFilters}
+                style={{ marginTop: Spacing.sm }}
+              />
+            ) : (
+              <RPGButton
+                title="Adicionar Primeiro Item"
+                variant="secondary"
+                size="sm"
+                onPress={() => setIsAddModalVisible(true)}
+                style={{ marginTop: Spacing.sm }}
+              />
+            )}
           </RPGCard>
         ) : (
-          filteredInventory.map((item) => {
+          filteredAndSortedInventory.map((item) => {
             const isEquipped = item.equipped;
             const itemTotalWeight = Math.round((item.weight || 0) * (item.quantity || 1) * 10) / 10;
 
@@ -1139,13 +1332,60 @@ const styles = StyleSheet.create({
     gap: 8,
     alignItems: 'center',
   },
-  searchInput: {
+  searchInputWrapper: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: Radius.md,
     borderWidth: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
+  },
+  searchInput: {
+    flex: 1,
     paddingVertical: 8,
     fontSize: 13,
+  },
+  searchClearBtn: {
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchClearBtnText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  sortSection: {
+    gap: 6,
+    marginTop: 4,
+  },
+  sortHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sortSectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  resetFilterText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  sortChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  sortChip: {
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+  },
+  sortChipText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   categoryScroll: {
     gap: 6,
