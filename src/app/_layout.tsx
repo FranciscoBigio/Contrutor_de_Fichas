@@ -86,6 +86,13 @@ function RootNavigator() {
             headerBackTitle: 'Ficha',
           }}
         />
+        <Stack.Screen
+          name="character/[id]/inventory"
+          options={{
+            title: '🎒 Inventário & Mochila',
+            headerBackTitle: 'Ficha',
+          }}
+        />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </>

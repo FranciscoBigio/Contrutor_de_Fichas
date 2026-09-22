@@ -6,6 +6,7 @@ import {
   Attributes,
   calculateModifier,
   Character,
+  Coins,
   CombatCondition,
   InventoryItem,
   Spell,
@@ -46,6 +47,8 @@ interface CharacterContextData {
   toggleEquipItem: (charId: string, itemId: string) => Promise<void>;
   addItem: (charId: string, item: Omit<InventoryItem, 'id'>) => Promise<void>;
   removeItem: (charId: string, itemId: string) => Promise<void>;
+  updateCoins: (charId: string, coins: Coins) => Promise<void>;
+  updateItemQuantity: (charId: string, itemId: string, delta: number) => Promise<void>;
   resetToMock: () => Promise<void>;
 }
 
@@ -476,6 +479,27 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     await updateCharacter(charId, { inventory: updatedInv });
   };
 
+  const updateCoins = async (charId: string, coins: Coins) => {
+    await updateCharacter(charId, { coins });
+  };
+
+  const updateItemQuantity = async (charId: string, itemId: string, delta: number) => {
+    const target = characters.find((c) => c.id === charId);
+    if (!target) return;
+
+    const updatedInv = target.inventory
+      .map((item) => {
+        if (item.id === itemId) {
+          const nextQty = Math.max(0, item.quantity + delta);
+          return { ...item, quantity: nextQty };
+        }
+        return item;
+      })
+      .filter((item) => item.quantity > 0);
+
+    await updateCharacter(charId, { inventory: updatedInv });
+  };
+
   const resetToMock = async () => {
     await persistCharacters(MOCK_CHARACTERS);
     if (MOCK_CHARACTERS.length > 0) {
@@ -512,6 +536,8 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         toggleEquipItem,
         addItem,
         removeItem,
+        updateCoins,
+        updateItemQuantity,
         resetToMock,
       }}
     >
