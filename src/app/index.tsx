@@ -31,7 +31,7 @@ const PLANNED_SCREENS = [
   { id: '8', title: '8. Grimório & Magias (PRONTA)', desc: 'Controle de Spell Slots por círculo, magias preparadas e conjuração', icon: '🔮', ready: true, route: '/character/char-elora-03/spells' },
   { id: '9', title: '9. Inventário & Equipamentos (PRONTA)', desc: 'Mochila, armas com rolagem de dano, bolsa de 5 moedas (PO/PP/PC) e capacidade de carga D&D 5e', icon: '🎒', ready: true, route: '/character/hero-1/inventory' },
   { id: '10', title: '10. Biografia & Habilidades (PRONTA)', desc: 'História, características de raça/classe, traços de personalidade, ideais, vínculos, defeitos e notas', icon: '📜', ready: true, route: '/character/hero-1/bio' },
-  { id: '11', title: '11. Rolador de Dados Integrado', desc: 'Rolagens de d4 a d100 com cálculo de modificador e histórico', icon: '🎲', ready: false },
+  { id: '11', title: '11. Rolador de Dados Integrado (PRONTA)', desc: 'Rolagens poliédricas (d4 a d100), testes rápidos de atributos, vantagem/desvantagem, críticos e histórico', icon: '🎲', ready: true, route: '/dice' },
 ];
 
 export default function HomeScreen() {
@@ -67,12 +67,12 @@ export default function HomeScreen() {
 
         {/* Hero Card do Projeto */}
         <RPGCard variant="highlight" style={styles.heroCard}>
-          <RPGBadge label="COMMIT #17 • v0.17.0 • BIOGRAFIA & HABILIDADES (10/11 TELAS)" variant="gold" />
+          <RPGBadge label="COMMIT #18 • v0.18.0 • 100% DAS TELAS CONCLUÍDAS (11/11)" variant="gold" />
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             ⚔️ QuestSheet RPG
           </Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            A Tela 10 (Biografia, Traços & Habilidades) foi finalizada com os 4 pilares do D&D 5e, histórico, características de raça/classe e diário de campanha!
+            Todas as 11 telas planejadas estão 100% funcionais! A Tela 11 (Rolador de Dados) traz dados poliédricos (d4 a d100), vantagem/desvantagem e testes de atributos integrados!
           </Text>
 
           {/* Card de Sessão do Usuário */}
@@ -124,24 +124,31 @@ export default function HomeScreen() {
           />
 
           <View style={styles.tagRow}>
-            <RPGBadge label="SemVer v0.17.0" variant="hp" size="sm" />
-            <RPGBadge label="Biografia & Habilidades" variant="mana" size="sm" />
-            <RPGBadge label="Telas 10/11 Concluídas" variant="gold" size="sm" />
+            <RPGBadge label="SemVer v0.18.0" variant="hp" size="sm" />
+            <RPGBadge label="11/11 Telas Prontas" variant="mana" size="sm" />
+            <RPGBadge label="Rolador Poliédrico" variant="gold" size="sm" />
           </View>
         </RPGCard>
 
-        {/* Atalhos Rápidos para as 10 Telas Concluídas */}
+        {/* Atalhos Rápidos para as 11 Telas Concluídas */}
         <RPGCard style={styles.actionCard}>
           <Text style={[styles.actionTitle, { color: theme.text }]}>
-            🚀 Atalhos para as Telas Prontas (10 de 11)
+            🚀 Atalhos para as Telas Prontas (11 de 11)
           </Text>
           <Text style={[styles.actionDesc, { color: theme.textSecondary }]}>
-            Navegue pelas telas já construídas com base no padrão Stack e Context API:
+            Todas as 11 telas do aplicativo estão 100% operacionais e interligadas:
           </Text>
           <View style={{ gap: Spacing.xs }}>
             <RPGButton
-              title="📜 Abrir Tela 10: Biografia & Habilidades"
+              title="🎲 Abrir Tela 11: Rolador de Dados Poliédrico"
               variant="primary"
+              icon="👑"
+              onPress={() => router.push((activeCharacter ? `/character/${activeCharacter.id}/dice` : '/dice') as any)}
+              style={{ width: '100%' }}
+            />
+            <RPGButton
+              title="📜 Abrir Tela 10: Biografia & Habilidades"
+              variant="secondary"
               icon="✨"
               onPress={() => router.push((activeCharacter ? `/character/${activeCharacter.id}/bio` : '/character/hero-1/bio') as any)}
               style={{ width: '100%' }}
@@ -395,16 +402,16 @@ export default function HomeScreen() {
             ✅ Checklist do Repositório (Prof. Garrido)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commits 01 a 16 concluídos e sincronizados no GitHub
+            ✔ Commits 01 a 17 concluídos e sincronizados no GitHub
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commit 17 pronto: Tela 10 — Biografia, Traços de Personalidade, Ideais, Vínculos, Defeitos & Talentos (v0.17.0)
+            ✔ Commit 18 pronto: Tela 11 — Rolador de Dados Poliédricos Integrado (d4 a d100) com Histórico (v0.18.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ 10 de 11 telas concluídas e navegáveis com arquitetura em 3 camadas
+            ✔ 11 de 11 TELAS CONCLUÍDAS (100% do escopo do aplicativo entregue!)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Próximo: Tela 11 — Rolador de Dados Poliédricos Integrado (Commit 18)
+            ✔ Próximo: Commit 19 — Sistema avançado de filtros e ordenação do inventário / grimório
           </Text>
         </RPGCard>
       </ScrollView>

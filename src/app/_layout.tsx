@@ -100,6 +100,20 @@ function RootNavigator() {
             headerBackTitle: 'Ficha',
           }}
         />
+        <Stack.Screen
+          name="character/[id]/dice"
+          options={{
+            title: '🎲 Rolador de Dados',
+            headerBackTitle: 'Ficha',
+          }}
+        />
+        <Stack.Screen
+          name="dice"
+          options={{
+            title: '🎲 Rolador de Dados',
+            headerBackTitle: 'Voltar',
+          }}
+        />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </>
