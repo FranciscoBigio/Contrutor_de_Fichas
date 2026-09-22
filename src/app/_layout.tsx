@@ -65,6 +65,13 @@ function RootNavigator() {
             headerBackTitle: 'Voltar',
           }}
         />
+        <Stack.Screen
+          name="character/[id]/index"
+          options={{
+            title: '⚔️ Ficha de Combate',
+            headerBackTitle: 'Heróis',
+          }}
+        />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </>
