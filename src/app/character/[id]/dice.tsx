@@ -19,6 +19,13 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useCharacters } from '@/context/character-context';
 import { useTheme } from '@/context/theme-context';
 import { Attributes, calculateModifier, formatModifier } from '@/types/character';
+import {
+  rpgHapticButton,
+  rpgHapticCriticalFailure,
+  rpgHapticCriticalSuccess,
+  rpgHapticRoll,
+  rpgHapticSelection,
+} from '@/utils/haptics';
 
 type DiceType = 'd4' | 'd6' | 'd8' | 'd10' | 'd12' | 'd20' | 'd100';
 
@@ -76,6 +83,7 @@ export default function CharacterDiceScreen() {
       title: string,
       mode: 'normal' | 'advantage' | 'disadvantage' = 'normal'
     ) => {
+      rpgHapticButton();
       setIsRolling(true);
 
       setTimeout(() => {
@@ -118,6 +126,15 @@ export default function CharacterDiceScreen() {
 
           const diceSum = rolledNumbers.reduce((acc, n) => acc + n, 0);
           total = Math.max(0, diceSum + mod);
+        }
+
+        // Resposta Háptica Tátil baseada no resultado da rolagem
+        if (isCritSuccess) {
+          rpgHapticCriticalSuccess();
+        } else if (isCritFail) {
+          rpgHapticCriticalFailure();
+        } else {
+          rpgHapticRoll();
         }
 
         const now = new Date();
@@ -289,7 +306,10 @@ export default function CharacterDiceScreen() {
               return (
                 <Pressable
                   key={d.type}
-                  onPress={() => setSelectedDice(d.type)}
+                  onPress={() => {
+                    rpgHapticSelection();
+                    setSelectedDice(d.type);
+                  }}
                   style={[
                     styles.diceBtn,
                     {
@@ -321,14 +341,20 @@ export default function CharacterDiceScreen() {
               </Text>
               <View style={styles.stepperBox}>
                 <Pressable
-                  onPress={() => setDiceCount((prev) => Math.max(1, prev - 1))}
+                  onPress={() => {
+                    rpgHapticSelection();
+                    setDiceCount((prev) => Math.max(1, prev - 1));
+                  }}
                   style={[styles.stepperBtn, { borderColor: theme.border }]}
                 >
                   <Text style={[styles.stepperBtnText, { color: theme.text }]}>-</Text>
                 </Pressable>
                 <Text style={[styles.stepperVal, { color: theme.text }]}>{diceCount}</Text>
                 <Pressable
-                  onPress={() => setDiceCount((prev) => Math.min(10, prev + 1))}
+                  onPress={() => {
+                    rpgHapticSelection();
+                    setDiceCount((prev) => Math.min(10, prev + 1));
+                  }}
                   style={[styles.stepperBtn, { borderColor: theme.border }]}
                 >
                   <Text style={[styles.stepperBtnText, { color: theme.text }]}>+</Text>
@@ -343,7 +369,10 @@ export default function CharacterDiceScreen() {
               </Text>
               <View style={styles.stepperBox}>
                 <Pressable
-                  onPress={() => setManualModifier((prev) => prev - 1)}
+                  onPress={() => {
+                    rpgHapticSelection();
+                    setManualModifier((prev) => prev - 1);
+                  }}
                   style={[styles.stepperBtn, { borderColor: theme.border }]}
                 >
                   <Text style={[styles.stepperBtnText, { color: theme.text }]}>-</Text>
@@ -352,7 +381,10 @@ export default function CharacterDiceScreen() {
                   {formatModifier(manualModifier)}
                 </Text>
                 <Pressable
-                  onPress={() => setManualModifier((prev) => prev + 1)}
+                  onPress={() => {
+                    rpgHapticSelection();
+                    setManualModifier((prev) => prev + 1);
+                  }}
                   style={[styles.stepperBtn, { borderColor: theme.border }]}
                 >
                   <Text style={[styles.stepperBtnText, { color: theme.text }]}>+</Text>
@@ -369,7 +401,10 @@ export default function CharacterDiceScreen() {
               </Text>
               <View style={styles.advantageToggleGroup}>
                 <Pressable
-                  onPress={() => setD20Mode('normal')}
+                  onPress={() => {
+                    rpgHapticSelection();
+                    setD20Mode('normal');
+                  }}
                   style={[
                     styles.advBtn,
                     {
@@ -389,7 +424,10 @@ export default function CharacterDiceScreen() {
                 </Pressable>
 
                 <Pressable
-                  onPress={() => setD20Mode('advantage')}
+                  onPress={() => {
+                    rpgHapticSelection();
+                    setD20Mode('advantage');
+                  }}
                   style={[
                     styles.advBtn,
                     {
@@ -409,7 +447,10 @@ export default function CharacterDiceScreen() {
                 </Pressable>
 
                 <Pressable
-                  onPress={() => setD20Mode('disadvantage')}
+                  onPress={() => {
+                    rpgHapticSelection();
+                    setD20Mode('disadvantage');
+                  }}
                   style={[
                     styles.advBtn,
                     {

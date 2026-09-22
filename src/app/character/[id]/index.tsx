@@ -28,6 +28,15 @@ import {
   DamageType,
   formatModifier,
 } from '@/types/character';
+import {
+  rpgHapticButton,
+  rpgHapticCriticalFailure,
+  rpgHapticCriticalSuccess,
+  rpgHapticDamage,
+  rpgHapticHeal,
+  rpgHapticRoll,
+  rpgHapticSelection,
+} from '@/utils/haptics';
 
 const ATTRIBUTE_LIST: { key: keyof Attributes; short: string; full: string }[] = [
   { key: 'strength', short: 'FOR', full: 'Força' },
@@ -136,16 +145,19 @@ export default function CharacterGeneralSheetScreen() {
   };
 
   const handleQuickDamage = async (amount: number) => {
+    rpgHapticDamage();
     await modifyHp(character.id, -amount);
     addCombatLog(`⚔️ ${character.name} sofreu ${amount} de dano!`);
   };
 
   const handleQuickHeal = async (amount: number) => {
+    rpgHapticHeal();
     await modifyHp(character.id, amount);
     addCombatLog(`✨ ${character.name} recuperou ${amount} PV!`);
   };
 
   const handleClearTempHp = async () => {
+    rpgHapticButton();
     await modifyTempHp(character.id, 0);
     addCombatLog('🛡️ PV Temporário zerado.');
   };
@@ -158,6 +170,7 @@ export default function CharacterGeneralSheetScreen() {
     }
 
     if (calcMode === 'damage') {
+      rpgHapticDamage();
       const finalDmg = Math.max(1, Math.round(val * damageMultiplier));
       await modifyHp(character.id, -finalDmg);
       const multiText =
@@ -168,9 +181,11 @@ export default function CharacterGeneralSheetScreen() {
           : '';
       addCombatLog(`💥 Dano de ${selectedDamageType}: ${finalDmg} PV${multiText}!`);
     } else if (calcMode === 'heal') {
+      rpgHapticHeal();
       await modifyHp(character.id, val);
       addCombatLog(`✨ Cura aplicada: +${val} PV recuperados!`);
     } else {
+      rpgHapticHeal();
       await modifyTempHp(character.id, (character.tempHp || 0) + val);
       addCombatLog(`🛡️ Escudo Adicional: +${val} PV Temporário!`);
     }
@@ -181,6 +196,13 @@ export default function CharacterGeneralSheetScreen() {
 
   const handleRollInitiative = () => {
     const d20 = Math.floor(Math.random() * 20) + 1;
+    if (d20 === 20) {
+      rpgHapticCriticalSuccess();
+    } else if (d20 === 1) {
+      rpgHapticCriticalFailure();
+    } else {
+      rpgHapticRoll();
+    }
     const total = d20 + character.initiative;
     addCombatLog(`⚡ Iniciativa: Rolou d20(${d20}) + ${formatModifier(character.initiative)} = ${total}!`);
     Alert.alert('⚡ Rolagem de Iniciativa', `Resultado do d20: ${d20}\nModificador de DES: ${formatModifier(character.initiative)}\nTotal de Combate: ${total}!`);
@@ -188,11 +210,19 @@ export default function CharacterGeneralSheetScreen() {
 
   const handleRollDeathSave = async () => {
     const res = await rollDeathSave(character.id);
+    if (res.result === 'critical_success') {
+      rpgHapticCriticalSuccess();
+    } else if (res.result === 'success') {
+      rpgHapticHeal();
+    } else {
+      rpgHapticCriticalFailure();
+    }
     addCombatLog(res.message);
     Alert.alert('💀 Salvaguarda contra a Morte', res.message);
   };
 
   const handleToggleInspiration = async () => {
+    rpgHapticSelection();
     await toggleInspiration(character.id);
     addCombatLog(
       character.hasInspiration
@@ -202,18 +232,21 @@ export default function CharacterGeneralSheetScreen() {
   };
 
   const handleShortRest = async () => {
+    rpgHapticHeal();
     await shortRest(character.id);
     addCombatLog('☕ Descanso Curto concluído (PVs recuperados com dado de vida).');
     Alert.alert('☕ Descanso Curto', `${character.name} recuperou fôlego e pontos de vida!`);
   };
 
   const handleLongRest = async () => {
+    rpgHapticHeal();
     await longRest(character.id);
     addCombatLog('⛺ Descanso Longo concluído (100% PV, slots de magia e dados restaurados).');
     Alert.alert('⛺ Descanso Longo', `${character.name} descansou completamente. PV ao máximo e magias recarregadas!`);
   };
 
   const toggleDeathSave = async (type: 'successes' | 'failures', index: number) => {
+    rpgHapticSelection();
     const current = character.deathSaves[type];
     const nextVal = current === index + 1 ? index : index + 1;
     await updateCharacter(character.id, {
