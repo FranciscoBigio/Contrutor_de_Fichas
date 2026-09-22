@@ -25,7 +25,7 @@ const PLANNED_SCREENS = [
   { id: '3', title: '3. Recuperação de Senha (PRONTA)', desc: 'Redefinição de acesso com envio simulado de código e timer de reenvio', icon: '🔑', ready: true, route: '/auth/forgot-password' },
   // Módulo 2: Gerenciamento & Ficha do RPG (Iniciado no Commit 07!)
   { id: '4', title: '4. Meus Personagens (HUB) (PRONTA)', desc: 'Dashboard com busca em tempo real, filtros por classe, barra de vida e status', icon: '🛡️', ready: true, route: '/characters' },
-  { id: '5', title: '5. Criação de Herói', desc: 'Formulário em etapas (raça, classe, atributos e avatar)', icon: '✨', ready: false },
+  { id: '5', title: '5. Criação de Herói (PRONTA - Etapa 1)', desc: 'Assistente em etapas: raça, classe, atributos, tendência e avatar', icon: '✨', ready: true, route: '/create' },
   { id: '6', title: '6. Ficha Geral (Combate & Atributos)', desc: 'HP dinâmico, CA, Iniciativa e grid dos 6 atributos principais', icon: '⚔️', ready: false },
   { id: '7', title: '7. Perícias & Salvaguardas', desc: '18 perícias clássicas com cálculo de bônus e proficiência', icon: '🎯', ready: false },
   { id: '8', title: '8. Grimório & Magias', desc: 'Controle de Spell Slots por círculo e magias preparadas', icon: '🔮', ready: false },
@@ -67,12 +67,12 @@ export default function HomeScreen() {
 
         {/* Hero Card do Projeto */}
         <RPGCard variant="highlight" style={styles.heroCard}>
-          <RPGBadge label="COMMIT #09 • v0.9.0 • BUSCA & FILTROS POR CLASSE NO HUB" variant="gold" />
+          <RPGBadge label="COMMIT #10 • v0.10.0 • CRIAÇÃO DE HERÓI (5/11 TELAS)" variant="gold" />
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             ⚔️ QuestSheet RPG
           </Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            Busca instantânea por nome/título/raça e filtros horizontais por classe adicionados à listagem de heróis!
+            A Tela 5 (Criação de Herói) foi construída com seleção visual de raças, classes, alinhamento moral e validações!
           </Text>
 
           {/* Card de Sessão do Usuário */}
@@ -124,27 +124,36 @@ export default function HomeScreen() {
           />
 
           <View style={styles.tagRow}>
-            <RPGBadge label="SemVer v0.9.0" variant="hp" size="sm" />
-            <RPGBadge label="Busca & Filtros Ativos" variant="mana" size="sm" />
-            <RPGBadge label="Telas 4/11 Concluídas" variant="gold" size="sm" />
+            <RPGBadge label="SemVer v0.10.0" variant="hp" size="sm" />
+            <RPGBadge label="Etapa 1 Concluída" variant="mana" size="sm" />
+            <RPGBadge label="Telas 5/11 Concluídas" variant="gold" size="sm" />
           </View>
         </RPGCard>
 
-        {/* Atalhos Rápidos para as 4 Telas Concluídas */}
+        {/* Atalhos Rápidos para as 5 Telas Concluídas */}
         <RPGCard style={styles.actionCard}>
           <Text style={[styles.actionTitle, { color: theme.text }]}>
-            🚀 Atalhos para as Telas Prontas (4 de 11)
+            🚀 Atalhos para as Telas Prontas (5 de 11)
           </Text>
           <Text style={[styles.actionDesc, { color: theme.textSecondary }]}>
             Navegue pelas telas já construídas com base no padrão Stack e Context API:
           </Text>
-          <RPGButton
-            title="🛡️ Abrir Tela 4: Meus Personagens (HUB 1)"
-            variant="primary"
-            icon="✨"
-            onPress={() => router.push('/characters' as any)}
-            style={{ width: '100%' }}
-          />
+          <View style={{ gap: Spacing.xs }}>
+            <RPGButton
+              title="🛡️ Abrir Tela 4: Meus Personagens (HUB 1)"
+              variant="primary"
+              icon="📜"
+              onPress={() => router.push('/characters' as any)}
+              style={{ width: '100%' }}
+            />
+            <RPGButton
+              title="✨ Abrir Tela 5: Forjar Novo Herói"
+              variant="secondary"
+              icon="⚔️"
+              onPress={() => router.push('/create' as any)}
+              style={{ width: '100%' }}
+            />
+          </View>
           <View style={styles.actionBtnRow}>
             <RPGButton
               title="1. Login"
@@ -348,16 +357,16 @@ export default function HomeScreen() {
             ✅ Checklist do Repositório (Prof. Garrido)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commits 01 a 08 concluídos e sincronizados no GitHub
+            ✔ Commits 01 a 09 concluídos e sincronizados no GitHub
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commit 09 pronto: Busca em tempo real e filtros de classe no HUB (v0.9.0)
+            ✔ Commit 10 pronto: Tela 5 — Criação de Herói (Etapa 1) com raças, classes e vocação (v0.10.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ 4 de 11 telas concluídas e navegáveis com estado local + global
+            ✔ 5 de 11 telas concluídas e navegáveis com estado local + global
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Próximo: Tela 5 — Criação de Herói / Formulário em Etapas (Commit 10 - v0.10.0)
+            ✔ Próximo: Finalização da Criação de Herói (Etapa 2 - Atributos, PV e Persistência) (Commit 11 - v0.11.0)
           </Text>
         </RPGCard>
       </ScrollView>

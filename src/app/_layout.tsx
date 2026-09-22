@@ -58,6 +58,13 @@ function RootNavigator() {
             headerBackTitle: 'Início',
           }}
         />
+        <Stack.Screen
+          name="create"
+          options={{
+            title: '✨ Forjar Herói',
+            headerBackTitle: 'Voltar',
+          }}
+        />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </>
