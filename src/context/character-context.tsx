@@ -54,6 +54,9 @@ interface CharacterContextData {
   updateBio: (charId: string, bioUpdates: Partial<CharacterBio>) => Promise<void>;
   addFeature: (charId: string, feature: Omit<FeatureTrait, 'id'>) => Promise<void>;
   removeFeature: (charId: string, featureId: string) => Promise<void>;
+  exportCharacterAsJson: (charId: string) => string | null;
+  exportAllCharactersAsJson: () => string;
+  importCharacterFromJson: (jsonStr: string) => Promise<{ success: boolean; message: string; character?: Character }>;
   resetToMock: () => Promise<void>;
 }
 
@@ -535,6 +538,53 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     await updateCharacter(charId, { features: updatedFeatures });
   };
 
+  const exportCharacterAsJson = (charId: string): string | null => {
+    const target = characters.find((c) => c.id === charId);
+    if (!target) return null;
+    return JSON.stringify(target, null, 2);
+  };
+
+  const exportAllCharactersAsJson = (): string => {
+    return JSON.stringify(characters, null, 2);
+  };
+
+  const importCharacterFromJson = async (
+    jsonStr: string
+  ): Promise<{ success: boolean; message: string; character?: Character }> => {
+    try {
+      const parsed = JSON.parse(jsonStr.trim());
+      if (!parsed.name || !parsed.race || !parsed.class || !parsed.attributes) {
+        return {
+          success: false,
+          message: 'O JSON fornecido não contém a estrutura obrigatória da ficha (nome, raça, classe e atributos).',
+        };
+      }
+
+      const importedChar: Character = {
+        ...parsed,
+        id: `char-imported-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const updatedList = [importedChar, ...characters];
+      await persistCharacters(updatedList);
+      await setActiveCharacterId(importedChar.id);
+
+      return {
+        success: true,
+        message: `O aventureiro "${importedChar.name}" foi importado com sucesso!`,
+        character: importedChar,
+      };
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Formato inválido';
+      return {
+        success: false,
+        message: `Falha ao processar arquivo JSON: ${errorMsg}`,
+      };
+    }
+  };
+
   const resetToMock = async () => {
     await persistCharacters(MOCK_CHARACTERS);
     if (MOCK_CHARACTERS.length > 0) {
@@ -576,6 +626,9 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         updateBio,
         addFeature,
         removeFeature,
+        exportCharacterAsJson,
+        exportAllCharactersAsJson,
+        importCharacterFromJson,
         resetToMock,
       }}
     >

@@ -67,12 +67,12 @@ export default function HomeScreen() {
 
         {/* Hero Card do Projeto */}
         <RPGCard variant="highlight" style={styles.heroCard}>
-          <RPGBadge label="COMMIT #19 • v0.19.0 • CONFIGURAÇÕES DO SISTEMA (TELA 12 BÔNUS)" variant="gold" />
+          <RPGBadge label="COMMIT #20 • v0.20.0 • META DE 20 COMMITS ALCANÇADA!" variant="gold" />
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             ⚔️ QuestSheet RPG
           </Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            A Tela 12 (Configurações do Sistema) traz personalização de temas, feedback tátil, regras de jogo, gerenciamento de dados offline e perfil seguro!
+            Meta mínima de 20 commits atingida com sucesso! Novo módulo de Backup e Troca de Fichas em JSON offline integrado às 12 telas!
           </Text>
 
           {/* Card de Sessão do Usuário */}
@@ -117,11 +117,11 @@ export default function HomeScreen() {
 
           <View style={{ flexDirection: 'row', gap: Spacing.xs, width: '100%' }}>
             <RPGButton
-              title="⚙️ Configurações"
+              title="⚙️ Configurações & Backup"
               variant="primary"
-              icon="🛠️"
+              icon="📦"
               onPress={() => router.push('/settings' as any)}
-              style={{ flex: 1 }}
+              style={{ flex: 1.2 }}
             />
             <RPGButton
               title={isDark ? '☀️ Light' : '🌙 Dark'}
@@ -132,9 +132,9 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.tagRow}>
-            <RPGBadge label="SemVer v0.19.0" variant="hp" size="sm" />
-            <RPGBadge label="12 Telas Prontas" variant="mana" size="sm" />
-            <RPGBadge label="Configurações & Dados" variant="gold" size="sm" />
+            <RPGBadge label="SemVer v0.20.0" variant="hp" size="sm" />
+            <RPGBadge label="20 Commits Atingidos" variant="mana" size="sm" />
+            <RPGBadge label="Backup JSON Offline" variant="gold" size="sm" />
           </View>
         </RPGCard>
 
@@ -417,16 +417,16 @@ export default function HomeScreen() {
             ✅ Checklist do Repositório (Prof. Garrido)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commits 01 a 18 concluídos e sincronizados no GitHub
+            ✔ Commits 01 a 19 concluídos e sincronizados no GitHub
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commit 19 pronto: Tela 12 (Bônus) — Configurações, Preferências de Jogo, Temas e Armazenamento (v0.19.0)
+            ✔ Commit 20 pronto: Backup, Exportação e Importação de Fichas em JSON Offline (v0.20.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ 12 TELAS CONCLUÍDAS (11 do escopo de RPG + 1 de Configurações do Sistema)
+            ✔ META DE 20 COMMITS ALCANÇADA COM SUCESSO! (Requisito da disciplina atendido)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Próximo: Commit 20 — Exportação e Importação de fichas em formato JSON para backup offline
+            ✔ Próximo: Commit 21 — Filtros e ordenação refinada no inventário e grimório
           </Text>
         </RPGCard>
       </ScrollView>

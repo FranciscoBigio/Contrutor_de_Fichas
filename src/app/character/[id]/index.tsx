@@ -86,6 +86,7 @@ export default function CharacterGeneralSheetScreen() {
     shortRest,
     longRest,
     updateCharacter,
+    exportCharacterAsJson,
   } = useCharacters();
 
   const character = (id ? getCharacterById(id) : null) || activeCharacter;
@@ -691,6 +692,21 @@ export default function CharacterGeneralSheetScreen() {
               variant="primary"
               icon="🎲"
               onPress={() => router.push(`/character/${character.id}/dice` as any)}
+              style={styles.subBtn}
+            />
+            <RPGButton
+              title="📦 Backup: Exportar Ficha (JSON)"
+              variant="secondary"
+              icon="💾"
+              onPress={() => {
+                const json = exportCharacterAsJson(character.id);
+                if (json) {
+                  Alert.alert(
+                    `📦 Backup: ${character.name}`,
+                    `Ficha serializada com sucesso (${json.length} caracteres)!\n\nAcesse Configurações no menu principal para exportar/importar fichas completas.`
+                  );
+                }
+              }}
               style={styles.subBtn}
             />
           </View>

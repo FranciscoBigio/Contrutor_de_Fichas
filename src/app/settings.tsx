@@ -2,11 +2,13 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
+  Modal,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 
@@ -24,7 +26,12 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { theme, isDark, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
-  const { characters, resetToMock } = useCharacters();
+  const {
+    characters,
+    resetToMock,
+    exportAllCharactersAsJson,
+    importCharacterFromJson,
+  } = useCharacters();
 
   // Preferências de Jogo e Interface (Estado Local)
   const [hapticFeedback, setHapticFeedback] = useState<boolean>(true);
@@ -32,6 +39,13 @@ export default function SettingsScreen() {
   const [encumbranceRule, setEncumbranceRule] = useState<boolean>(true);
   const [confirmActions, setConfirmActions] = useState<boolean>(false);
   const [autoDeathSave, setAutoDeathSave] = useState<boolean>(true);
+
+  // Estados dos Modais de Backup JSON
+  const [isExportModalVisible, setIsExportModalVisible] = useState<boolean>(false);
+  const [exportedJsonText, setExportedJsonText] = useState<string>('');
+
+  const [isImportModalVisible, setIsImportModalVisible] = useState<boolean>(false);
+  const [jsonToImport, setJsonToImport] = useState<string>('');
 
   // Confirmação de Logout
   const handleLogout = () => {
@@ -65,6 +79,108 @@ export default function SettingsScreen() {
         },
       ]
     );
+  };
+
+  // Abrir Modal de Exportação
+  const handleOpenExportModal = () => {
+    const json = exportAllCharactersAsJson();
+    setExportedJsonText(json);
+    setIsExportModalVisible(true);
+  };
+
+  // Carregar Modelo de Teste para Importação
+  const handleLoadSampleJson = () => {
+    const sample = {
+      name: 'Grommash o Implacável',
+      title: 'O Flagelo dos Ermos',
+      playerName: 'Francisco Bigio',
+      race: 'Meio-Orc',
+      class: 'Bárbaro',
+      level: 4,
+      experience: 2700,
+      alignment: 'Caótico e Neutro',
+      background: 'Forasteiro',
+      avatarEmoji: '🪓',
+      proficiencyBonus: 2,
+      speed: 12,
+      initiative: 2,
+      armorClass: 15,
+      currentHp: 44,
+      maxHp: 44,
+      tempHp: 0,
+      hitDice: '1d12',
+      hitDiceUsed: 0,
+      deathSaves: { successes: 0, failures: 0 },
+      attributes: {
+        strength: 18,
+        dexterity: 14,
+        constitution: 16,
+        intelligence: 8,
+        wisdom: 12,
+        charisma: 10,
+      },
+      savingThrowProficiencies: ['strength', 'constitution'],
+      skills: [
+        { name: 'Atletismo', attribute: 'strength', proficient: true },
+        { name: 'Intimidação', attribute: 'charisma', proficient: true },
+        { name: 'Sobrevivência', attribute: 'wisdom', proficient: true },
+      ],
+      inventory: [
+        {
+          id: 'item-machado-1',
+          name: 'Machado de Batalha Pesado',
+          category: 'Arma',
+          quantity: 1,
+          weight: 3.5,
+          equipped: true,
+          damage: '1d12+4 cortante',
+          description: 'Lâmina entalhada com runas tribais de fúria.',
+          rarity: 'Incomum',
+        },
+      ],
+      coins: { cp: 50, sp: 20, ep: 0, gp: 35, pp: 1 },
+      features: [
+        {
+          id: 'feat-furia-1',
+          name: 'Fúria Bárbara',
+          source: 'Classe',
+          description: 'Vantagem em testes de FOR, +2 no dano corpo a corpo e resistência a corte, impacto e perfuração.',
+        },
+      ],
+      bio: {
+        personalityTraits: 'Falo pouco e prefiro que meu machado resolva os impasses.',
+        ideals: 'A força da tribo reside na coragem de cada guerreiro.',
+        bonds: 'Protegerei o talismã dos meus ancestrais até meu último suspiro.',
+        flaws: 'Facilmente provocado quando duvidam da minha honra.',
+        backstory: 'Nascido nas estepes montanhosas, vaga em busca de desafios dignos.',
+        appearance: 'Cicatrizações rituais nos ombros, 1.95m, pele cinzenta e olhos amarelos.',
+        notes: 'Prometeu vingança contra o xamã que traiu seu clã.',
+      },
+    };
+
+    setJsonToImport(JSON.stringify(sample, null, 2));
+  };
+
+  // Executar Importação do JSON
+  const handleExecuteImport = async () => {
+    if (!jsonToImport.trim()) {
+      Alert.alert('Atenção', 'Cole o código JSON da ficha para importar.');
+      return;
+    }
+
+    const result = await importCharacterFromJson(jsonToImport);
+    if (result.success) {
+      setIsImportModalVisible(false);
+      setJsonToImport('');
+      Alert.alert('🎉 Ficha Importada!', result.message, [
+        {
+          text: 'Ver Personagens',
+          onPress: () => router.push('/characters' as any),
+        },
+      ]);
+    } else {
+      Alert.alert('Erro na Importação', result.message);
+    }
   };
 
   return (
@@ -274,7 +390,43 @@ export default function SettingsScreen() {
           </View>
         </RPGCard>
 
-        {/* Seção 4: Armazenamento & Camada de Dados (Offline-First) */}
+        {/* Seção 4: Backup & Troca de Fichas (JSON) */}
+        <RPGCard variant="default" style={styles.sectionCard}>
+          <View style={styles.sectionTitleRow}>
+            <Text style={styles.sectionEmoji}>📦</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+              Backup & Troca de Fichas (JSON)
+            </Text>
+          </View>
+
+          <Text style={[styles.settingDesc, { color: theme.textSecondary }]}>
+            Exporte suas fichas completas para compartilhar com mestres ou importe heróis criados por amigos via arquivo JSON estruturado:
+          </Text>
+
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+            <RPGButton
+              title="📤 Exportar JSON"
+              variant="secondary"
+              size="sm"
+              icon="💾"
+              onPress={handleOpenExportModal}
+              style={{ flex: 1 }}
+            />
+            <RPGButton
+              title="📥 Importar JSON"
+              variant="primary"
+              size="sm"
+              icon="✨"
+              onPress={() => {
+                setJsonToImport('');
+                setIsImportModalVisible(true);
+              }}
+              style={{ flex: 1 }}
+            />
+          </View>
+        </RPGCard>
+
+        {/* Seção 5: Armazenamento & Camada de Dados (Offline-First) */}
         <RPGCard variant="default" style={styles.sectionCard}>
           <View style={styles.sectionTitleRow}>
             <Text style={styles.sectionEmoji}>💾</Text>
@@ -326,7 +478,7 @@ export default function SettingsScreen() {
           />
         </RPGCard>
 
-        {/* Seção 5: Informações Acadêmicas & Versão */}
+        {/* Seção 6: Informações Acadêmicas & Versão */}
         <RPGCard variant="highlight" style={styles.academicCard}>
           <Text style={[styles.institutionHeader, { color: theme.textSecondary }]}>
             UNIVERSIDADE DE VASSOURAS • ENGENHARIA DE SOFTWARE
@@ -338,14 +490,15 @@ export default function SettingsScreen() {
             Disciplina: Aplicativos Híbridos{'\n'}
             Professor: <Text style={{ color: theme.text, fontWeight: 'bold' }}>Márcio Garrido</Text>{'\n'}
             Aluno: <Text style={{ color: theme.primary, fontWeight: 'bold' }}>Francisco Bigio</Text>{'\n'}
-            Versão: <Text style={{ color: theme.textGold, fontWeight: 'bold' }}>v0.19.0</Text> • Expo SDK 57 / React Native 0.86
+            Versão: <Text style={{ color: theme.textGold, fontWeight: 'bold' }}>v0.20.0</Text> • Expo SDK 57 / React Native 0.86
           </Text>
 
           <View style={styles.techTagsRow}>
             <RPGBadge label="Expo Router" variant="mana" size="sm" />
             <RPGBadge label="AsyncStorage" variant="stamina" size="sm" />
             <RPGBadge label="SecureStore" variant="gold" size="sm" />
-            <RPGBadge label="11 Telas Entregues" variant="hp" size="sm" />
+            <RPGBadge label="Backup JSON" variant="arcane" size="sm" />
+            <RPGBadge label="20 Commits Concluídos" variant="hp" size="sm" />
           </View>
         </RPGCard>
 
@@ -365,6 +518,104 @@ export default function SettingsScreen() {
           />
         </View>
       </ScrollView>
+
+      {/* Modal 1: Exportação JSON */}
+      <Modal
+        visible={isExportModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsExportModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundCard, borderColor: theme.border }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
+              📤 Backup de Fichas (JSON)
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
+              {characters.length} ficha(s) serializada(s) prontas para cópia ou compartilhamento:
+            </Text>
+
+            <ScrollView style={{ maxHeight: 300 }}>
+              <TextInput
+                value={exportedJsonText}
+                editable={false}
+                multiline
+                selectTextOnFocus
+                style={[
+                  styles.jsonCodeBox,
+                  { backgroundColor: theme.backgroundInput, color: theme.text, borderColor: theme.border },
+                ]}
+              />
+            </ScrollView>
+
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+              <RPGButton
+                title="Fechar"
+                variant="primary"
+                onPress={() => setIsExportModalVisible(false)}
+                style={{ flex: 1 }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal 2: Importação JSON */}
+      <Modal
+        visible={isImportModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsImportModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundCard, borderColor: theme.border }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
+              📥 Importar Ficha via JSON
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
+              Cole o objeto JSON da ficha ou carregue o modelo demonstrativo:
+            </Text>
+
+            <TextInput
+              value={jsonToImport}
+              onChangeText={setJsonToImport}
+              placeholder="Cole aqui o JSON estruturado da ficha..."
+              placeholderTextColor={theme.textSecondary}
+              multiline
+              numberOfLines={8}
+              style={[
+                styles.jsonCodeBox,
+                { height: 160, backgroundColor: theme.backgroundInput, color: theme.text, borderColor: theme.border },
+              ]}
+            />
+
+            <View style={{ flexDirection: 'row', gap: 6, marginVertical: 4 }}>
+              <RPGButton
+                title="⚡ Carregar Exemplo (Grommash)"
+                variant="ghost"
+                size="sm"
+                onPress={handleLoadSampleJson}
+                style={{ flex: 1 }}
+              />
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+              <RPGButton
+                title="Cancelar"
+                variant="ghost"
+                onPress={() => setIsImportModalVisible(false)}
+                style={{ flex: 1 }}
+              />
+              <RPGButton
+                title="📥 Importar Herói"
+                variant="primary"
+                onPress={handleExecuteImport}
+                style={{ flex: 1.5 }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -505,5 +756,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.sm,
     marginTop: Spacing.xs,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    padding: Spacing.md,
+  },
+  modalContent: {
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  jsonCodeBox: {
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    padding: 10,
+    fontSize: 11,
+    fontFamily: 'monospace',
+    textAlignVertical: 'top',
   },
 });
