@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -14,11 +15,13 @@ import {
   RPGButton,
   RPGCard,
   RPGHpBar,
+  RPGInput,
 } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import { useCharacters } from '@/context/character-context';
 import { useTheme } from '@/context/theme-context';
+import { AVAILABLE_CLASSES } from '@/data/mock-characters';
 
 export default function CharactersListScreen() {
   const router = useRouter();
@@ -32,6 +35,33 @@ export default function CharactersListScreen() {
     resetToMock,
     loading,
   } = useCharacters();
+
+  // Estados locais para busca e filtro de classes (Aula 3, Slide 12 - Estado Local)
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedClass, setSelectedClass] = useState<string>('Todas');
+
+  // Filtragem dinâmica em tempo real
+  const filteredCharacters = characters.filter((char) => {
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch =
+      !query ||
+      char.name.toLowerCase().includes(query) ||
+      (char.title && char.title.toLowerCase().includes(query)) ||
+      char.race.toLowerCase().includes(query) ||
+      char.class.toLowerCase().includes(query);
+
+    const matchesClass =
+      selectedClass === 'Todas' || char.class === selectedClass;
+
+    return matchesSearch && matchesClass;
+  });
+
+  const isFiltered = searchQuery.trim() !== '' || selectedClass !== 'Todas';
+
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setSelectedClass('Todas');
+  };
 
   const handleDelete = (id: string, name: string) => {
     Alert.alert(
@@ -129,11 +159,110 @@ export default function CharactersListScreen() {
           </RPGCard>
         ) : null}
 
+        {/* Seção de Busca em Tempo Real & Filtro de Classes (Commit 09) */}
+        <View style={styles.searchFilterSection}>
+          <RPGInput
+            label="Buscar Aventureiro na Guilda"
+            placeholder="Digite nome, classe, raça ou título..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            icon="🔍"
+          />
+
+          {/* Carrossel de Filtros Rápidos por Classe */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterScroll}
+          >
+            <Pressable
+              onPress={() => setSelectedClass('Todas')}
+              style={[
+                styles.filterChip,
+                {
+                  backgroundColor:
+                    selectedClass === 'Todas'
+                      ? theme.primary
+                      : theme.backgroundCard,
+                  borderColor:
+                    selectedClass === 'Todas'
+                      ? theme.primary
+                      : theme.border,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  {
+                    color:
+                      selectedClass === 'Todas'
+                        ? '#1A140B'
+                        : theme.text,
+                    fontWeight:
+                      selectedClass === 'Todas' ? 'bold' : 'normal',
+                  },
+                ]}
+              >
+                🛡️ Todas ({characters.length})
+              </Text>
+            </Pressable>
+
+            {AVAILABLE_CLASSES.map((cls) => {
+              const count = characters.filter((c) => c.class === cls.name).length;
+              const isSelected = selectedClass === cls.name;
+              return (
+                <Pressable
+                  key={cls.name}
+                  onPress={() => setSelectedClass(cls.name)}
+                  style={[
+                    styles.filterChip,
+                    {
+                      backgroundColor: isSelected
+                        ? theme.primary
+                        : theme.backgroundCard,
+                      borderColor: isSelected
+                        ? theme.primary
+                        : theme.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      {
+                        color: isSelected ? '#1A140B' : theme.text,
+                        fontWeight: isSelected ? 'bold' : 'normal',
+                      },
+                    ]}
+                  >
+                    {cls.icon} {cls.name} {count > 0 ? `(${count})` : ''}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+
+          {/* Status dos Filtros */}
+          <View style={styles.filterStatusRow}>
+            <Text style={[styles.filterStatusText, { color: theme.textSecondary }]}>
+              Exibindo <Text style={{ color: theme.text, fontWeight: 'bold' }}>{filteredCharacters.length}</Text> de {characters.length} heróis
+            </Text>
+            {isFiltered ? (
+              <Pressable onPress={handleClearFilters}>
+                <Text style={[styles.clearFilterText, { color: theme.hp }]}>
+                  Limpar Filtros ✖
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
+
         {/* Lista de Todos os Personagens */}
         <View style={styles.listSection}>
           <View style={styles.sectionHeaderRow}>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>
-              📜 Registro de Heróis ({characters.length})
+              📜 Registro de Heróis ({filteredCharacters.length})
             </Text>
             <RPGBadge label="ASYNCSTORAGE" variant="mana" size="sm" />
           </View>
@@ -168,8 +297,26 @@ export default function CharactersListScreen() {
                 />
               </View>
             </RPGCard>
+          ) : filteredCharacters.length === 0 ? (
+            <RPGCard style={styles.emptyCard}>
+              <Text style={styles.emptyIcon}>🔍</Text>
+              <Text style={[styles.emptyTitle, { color: theme.text }]}>
+                Nenhum herói encontrado!
+              </Text>
+              <Text style={[styles.emptyDesc, { color: theme.textSecondary }]}>
+                Não encontramos aventureiros com o termo &quot;{searchQuery}&quot;{' '}
+                {selectedClass !== 'Todas' ? `na classe ${selectedClass}` : ''}.
+              </Text>
+              <RPGButton
+                title="Limpar Busca e Filtros"
+                variant="secondary"
+                icon="🔄"
+                size="sm"
+                onPress={handleClearFilters}
+              />
+            </RPGCard>
           ) : (
-            characters.map((char) => {
+            filteredCharacters.map((char) => {
               const isActive = activeCharacter?.id === char.id;
               return (
                 <RPGCard
@@ -493,4 +640,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: Spacing.sm,
   },
+  searchFilterSection: {
+    gap: Spacing.xs,
+  },
+  filterScroll: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    paddingVertical: 2,
+  },
+  filterChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterChipText: {
+    fontSize: 12,
+  },
+  filterStatusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 2,
+    marginTop: 2,
+  },
+  filterStatusText: {
+    fontSize: 11,
+  },
+  clearFilterText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
 });
+
