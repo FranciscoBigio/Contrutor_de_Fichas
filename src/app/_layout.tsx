@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
+import { AuthProvider } from '@/context/auth-context';
 import { ThemeProvider, useTheme } from '@/context/theme-context';
 
 function RootNavigator() {
@@ -28,6 +29,27 @@ function RootNavigator() {
             title: '⚔️ QuestSheet RPG',
           }}
         />
+        <Stack.Screen
+          name="auth/login"
+          options={{
+            title: '🔐 Portal do Aventureiro',
+            headerBackTitle: 'Voltar',
+          }}
+        />
+        <Stack.Screen
+          name="auth/register"
+          options={{
+            title: '📝 Cadastro de Aventureiro',
+            headerBackTitle: 'Voltar',
+          }}
+        />
+        <Stack.Screen
+          name="auth/forgot-password"
+          options={{
+            title: '🔑 Recuperação de Senha',
+            headerBackTitle: 'Voltar',
+          }}
+        />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </>
@@ -37,7 +59,9 @@ function RootNavigator() {
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <RootNavigator />
+      <AuthProvider>
+        <RootNavigator />
+      </AuthProvider>
     </ThemeProvider>
   );
 }
