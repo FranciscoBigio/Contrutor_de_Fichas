@@ -27,7 +27,7 @@ const PLANNED_SCREENS = [
   { id: '4', title: '4. Meus Personagens (HUB 1) (PRONTA)', desc: 'Dashboard com busca em tempo real, filtros por classe, barra de vida e status', icon: '🛡️', ready: true, route: '/characters' },
   { id: '5', title: '5. Criação de Herói (PRONTA)', desc: 'Assistente completo em 2 etapas: origem, alocação de atributos, PV e salvamento', icon: '✨', ready: true, route: '/create' },
   { id: '6', title: '6. Ficha Geral / HUB 2 (PRONTA)', desc: 'HP dinâmico, CA, Iniciativa, dados de vida e descanso de combate', icon: '⚔️', ready: true, route: '/character/hero-1' },
-  { id: '7', title: '7. Perícias & Salvaguardas', desc: '18 perícias clássicas com cálculo de bônus e proficiência', icon: '🎯', ready: false },
+  { id: '7', title: '7. Perícias & Salvaguardas (PRONTA)', desc: '18 perícias clássicas do D&D 5e com cálculo de bônus, maestria e sentidos passivos', icon: '🎯', ready: true, route: '/character/hero-1/skills' },
   { id: '8', title: '8. Grimório & Magias', desc: 'Controle de Spell Slots por círculo e magias preparadas', icon: '🔮', ready: false },
   { id: '9', title: '9. Inventário & Equipamentos', desc: 'Mochila, armas, moedas (PO, PP, PC) e capacidade de carga', icon: '🎒', ready: false },
   { id: '10', title: '10. Biografia & Habilidades', desc: 'História, características de raça/classe, traços e talentos', icon: '📜', ready: false },
@@ -67,12 +67,12 @@ export default function HomeScreen() {
 
         {/* Hero Card do Projeto */}
         <RPGCard variant="highlight" style={styles.heroCard}>
-          <RPGBadge label="COMMIT #13 • v0.13.0 • COMBATE INTERATIVO & CONDIÇÕES" variant="gold" />
+          <RPGBadge label="COMMIT #14 • v0.14.0 • PERÍCIAS & SALVAGUARDAS (7/11 TELAS)" variant="gold" />
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             ⚔️ QuestSheet RPG
           </Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            A Ficha Geral (HUB 2) agora conta com calculadora de dano/cura com resistências, 15 condições D&D 5e e inspiração heroica!
+            A Tela 7 (Perícias & Salvaguardas) foi finalizada com 18 perícias do D&D 5e, maestria, sentidos passivos e rolagens d20!
           </Text>
 
           {/* Card de Sessão do Usuário */}
@@ -124,31 +124,38 @@ export default function HomeScreen() {
           />
 
           <View style={styles.tagRow}>
-            <RPGBadge label="SemVer v0.13.0" variant="hp" size="sm" />
-            <RPGBadge label="Combate & Condições" variant="mana" size="sm" />
-            <RPGBadge label="Telas 6/11 Concluídas" variant="gold" size="sm" />
+            <RPGBadge label="SemVer v0.14.0" variant="hp" size="sm" />
+            <RPGBadge label="18 Perícias D&D 5e" variant="mana" size="sm" />
+            <RPGBadge label="Telas 7/11 Concluídas" variant="gold" size="sm" />
           </View>
         </RPGCard>
 
-        {/* Atalhos Rápidos para as 6 Telas Concluídas */}
+        {/* Atalhos Rápidos para as 7 Telas Concluídas */}
         <RPGCard style={styles.actionCard}>
           <Text style={[styles.actionTitle, { color: theme.text }]}>
-            🚀 Atalhos para as Telas Prontas (6 de 11)
+            🚀 Atalhos para as Telas Prontas (7 de 11)
           </Text>
           <Text style={[styles.actionDesc, { color: theme.textSecondary }]}>
             Navegue pelas telas já construídas com base no padrão Stack e Context API:
           </Text>
           <View style={{ gap: Spacing.xs }}>
             <RPGButton
-              title="⚔️ Abrir Tela 6: Ficha de Combate (HUB 2)"
+              title="🎯 Abrir Tela 7: Perícias & Salvaguardas"
               variant="primary"
+              icon="🎲"
+              onPress={() => router.push((activeCharacter ? `/character/${activeCharacter.id}/skills` : '/character/hero-1/skills') as any)}
+              style={{ width: '100%' }}
+            />
+            <RPGButton
+              title="⚔️ Abrir Tela 6: Ficha de Combate (HUB 2)"
+              variant="secondary"
               icon="🩸"
               onPress={() => router.push((activeCharacter ? `/character/${activeCharacter.id}` : '/character/hero-1') as any)}
               style={{ width: '100%' }}
             />
             <RPGButton
               title="🛡️ Abrir Tela 4: Meus Personagens (HUB 1)"
-              variant="primary"
+              variant="secondary"
               icon="📜"
               onPress={() => router.push('/characters' as any)}
               style={{ width: '100%' }}
@@ -374,16 +381,16 @@ export default function HomeScreen() {
             ✅ Checklist do Repositório (Prof. Garrido)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commits 01 a 12 concluídos e sincronizados no GitHub
+            ✔ Commits 01 a 13 concluídos e sincronizados no GitHub
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commit 13 pronto: Combate Interativo — calculadora de dano/cura com resistências, 15 condições D&D 5e e inspiração (v0.13.0)
+            ✔ Commit 14 pronto: Tela 7 — Perícias & Salvaguardas (18 perícias clássicas do D&D 5e) com cálculo de maestria e sentidos passivos (v0.14.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ 6 de 11 telas concluídas e navegáveis com estado local + global
+            ✔ 7 de 11 telas concluídas e navegáveis com estado local + global
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Próximo: Tela 7 — Perícias & Salvaguardas com cálculo de bônus D&D 5e (Commit 14 - v0.14.0)
+            ✔ Próximo: Tela 8 — Grimório & Magias com controle de spell slots por círculo (Commit 15 - v0.15.0)
           </Text>
         </RPGCard>
       </ScrollView>

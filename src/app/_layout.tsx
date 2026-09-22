@@ -72,6 +72,13 @@ function RootNavigator() {
             headerBackTitle: 'Heróis',
           }}
         />
+        <Stack.Screen
+          name="character/[id]/skills"
+          options={{
+            title: '🎯 Perícias & Salvaguardas',
+            headerBackTitle: 'Combate',
+          }}
+        />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </>
