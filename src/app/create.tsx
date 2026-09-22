@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -18,6 +19,8 @@ import {
   RPGInput,
 } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
+import { useAuth } from '@/context/auth-context';
+import { useCharacters } from '@/context/character-context';
 import { useTheme } from '@/context/theme-context';
 import {
   AVAILABLE_ALIGNMENTS,
@@ -25,10 +28,16 @@ import {
   AVAILABLE_RACES,
 } from '@/data/mock-characters';
 import {
+  Attributes,
+  calculateModifier,
   calculateProficiencyBonus,
+  FeatureTrait,
+  formatModifier,
+  InventoryItem,
   RPGAlignment,
   RPGClass,
   RPGRace,
+  Skill,
 } from '@/types/character';
 
 const COMMON_BACKGROUNDS = [
@@ -45,9 +54,216 @@ const COMMON_BACKGROUNDS = [
 
 const AVATAR_EMOJIS = ['🛡️', '🗡️', '🔮', '✨', '🏹', '🪓', '🐺', '🐲', '🧙‍♂️', '🧝‍♀️'];
 
+const ATTRIBUTE_LABELS: { key: keyof Attributes; short: string; full: string; desc: string }[] = [
+  { key: 'strength', short: 'FOR', full: 'Força', desc: 'Poder físico, atletismo e dano corpo a corpo' },
+  { key: 'dexterity', short: 'DES', full: 'Destreza', desc: 'Agilidade, esquiva, iniciativa e CA' },
+  { key: 'constitution', short: 'CON', full: 'Constituição', desc: 'Saúde, vigor e pontos de vida (PV)' },
+  { key: 'intelligence', short: 'INT', full: 'Inteligência', desc: 'Raciocínio lógico, arcanismo e investigação' },
+  { key: 'wisdom', short: 'SAB', full: 'Sabedoria', desc: 'Percepção, intuição e força de vontade' },
+  { key: 'charisma', short: 'CAR', full: 'Carisma', desc: 'Presença, liderança, persuasão e conjuração' },
+];
+
+function getSavingThrows(cls: RPGClass): (keyof Attributes)[] {
+  switch (cls) {
+    case 'Guerreiro':
+    case 'Bárbaro':
+      return ['strength', 'constitution'];
+    case 'Mago':
+      return ['intelligence', 'wisdom'];
+    case 'Ladino':
+      return ['dexterity', 'intelligence'];
+    case 'Clérigo':
+    case 'Paladino':
+      return ['wisdom', 'charisma'];
+    case 'Bardo':
+    case 'Bruxo':
+      return ['dexterity', 'charisma'];
+    case 'Druida':
+      return ['intelligence', 'wisdom'];
+    case 'Patrulheiro':
+    case 'Monge':
+      return ['strength', 'dexterity'];
+    case 'Feiticeiro':
+      return ['constitution', 'charisma'];
+    default:
+      return ['strength', 'constitution'];
+  }
+}
+
+function getDefaultSkills(cls: RPGClass): Skill[] {
+  switch (cls) {
+    case 'Guerreiro':
+      return [
+        { name: 'Atletismo', attribute: 'strength', proficient: true },
+        { name: 'Intimidação', attribute: 'charisma', proficient: true },
+        { name: 'Percepção', attribute: 'wisdom', proficient: false },
+        { name: 'Sobrevivência', attribute: 'wisdom', proficient: false },
+      ];
+    case 'Mago':
+      return [
+        { name: 'Arcanismo', attribute: 'intelligence', proficient: true },
+        { name: 'História', attribute: 'intelligence', proficient: true },
+        { name: 'Investigação', attribute: 'intelligence', proficient: true },
+        { name: 'Intuição', attribute: 'wisdom', proficient: false },
+      ];
+    case 'Ladino':
+      return [
+        { name: 'Acrobacia', attribute: 'dexterity', proficient: true },
+        { name: 'Furtividade', attribute: 'dexterity', proficient: true, expertise: true },
+        { name: 'Prestidigitação', attribute: 'dexterity', proficient: true },
+        { name: 'Enganação', attribute: 'charisma', proficient: true },
+      ];
+    case 'Clérigo':
+      return [
+        { name: 'Medicina', attribute: 'wisdom', proficient: true },
+        { name: 'Religião', attribute: 'intelligence', proficient: true },
+        { name: 'Persuasão', attribute: 'charisma', proficient: true },
+        { name: 'Intuição', attribute: 'wisdom', proficient: true },
+      ];
+    default:
+      return [
+        { name: 'Atletismo', attribute: 'strength', proficient: true },
+        { name: 'Percepção', attribute: 'wisdom', proficient: true },
+        { name: 'Sobrevivência', attribute: 'wisdom', proficient: false },
+      ];
+  }
+}
+
+function getDefaultInventory(cls: RPGClass): InventoryItem[] {
+  switch (cls) {
+    case 'Guerreiro':
+      return [
+        {
+          id: 'item-init-1',
+          name: 'Espada Longa de Aço',
+          category: 'Arma',
+          quantity: 1,
+          weight: 1.5,
+          equipped: true,
+          damage: '1d8+3 Cortante (Versátil 1d10)',
+          description: 'Lâmina reta forjada para combate marcial.',
+          rarity: 'Comum',
+        },
+        {
+          id: 'item-init-2',
+          name: 'Cota de Malha',
+          category: 'Armadura',
+          quantity: 1,
+          weight: 20.0,
+          equipped: true,
+          armorClassBonus: 16,
+          description: 'Armadura pesada de anéis entrelaçados.',
+          rarity: 'Comum',
+        },
+        {
+          id: 'item-init-3',
+          name: 'Poção de Cura',
+          category: 'Poção',
+          quantity: 2,
+          weight: 0.5,
+          equipped: false,
+          description: 'Recupera 2d4+2 PV.',
+          rarity: 'Comum',
+        },
+      ];
+    case 'Mago':
+      return [
+        {
+          id: 'item-init-1',
+          name: 'Cajado de Foco Arcano',
+          category: 'Arma',
+          quantity: 1,
+          weight: 1.8,
+          equipped: true,
+          damage: '1d6 Concussão',
+          description: 'Cajado entalhado para canalizar energias arcanas.',
+          rarity: 'Comum',
+        },
+        {
+          id: 'item-init-2',
+          name: 'Grimório de Feitiços',
+          category: 'Equipamento',
+          quantity: 1,
+          weight: 1.5,
+          equipped: false,
+          description: 'Livro de pergaminhos com fórmulas místicas.',
+          rarity: 'Comum',
+        },
+      ];
+    case 'Ladino':
+      return [
+        {
+          id: 'item-init-1',
+          name: 'Adagas Gêmeas',
+          category: 'Arma',
+          quantity: 2,
+          weight: 1.0,
+          equipped: true,
+          damage: '1d4+3 Perfurante (Ágil)',
+          description: 'Par de adagas leves para ataques precisos.',
+          rarity: 'Comum',
+        },
+        {
+          id: 'item-init-2',
+          name: 'Armadura de Couro',
+          category: 'Armadura',
+          quantity: 1,
+          weight: 4.0,
+          equipped: true,
+          armorClassBonus: 11,
+          description: 'Couro flexível para movimentação furtiva.',
+          rarity: 'Comum',
+        },
+      ];
+    default:
+      return [
+        {
+          id: 'item-init-1',
+          name: 'Arma Padrão de Classe',
+          category: 'Arma',
+          quantity: 1,
+          weight: 1.5,
+          equipped: true,
+          damage: '1d8+2 Físico',
+          description: 'Equipamento inicial de aventura.',
+          rarity: 'Comum',
+        },
+        {
+          id: 'item-init-2',
+          name: 'Mochila de Expedição',
+          category: 'Equipamento',
+          quantity: 1,
+          weight: 2.0,
+          equipped: false,
+          description: 'Contém tochas, corda e rações.',
+          rarity: 'Comum',
+        },
+      ];
+  }
+}
+
+function getDefaultFeatures(cls: RPGClass, race: RPGRace): FeatureTrait[] {
+  return [
+    {
+      id: 'feat-cls-1',
+      name: `Treinamento Marcial/Místico de ${cls}`,
+      source: 'Classe',
+      description: `Habilidade intrínseca desenvolvida através da dedicação à senda de ${cls}.`,
+    },
+    {
+      id: 'feat-race-1',
+      name: `Herança de ${race}`,
+      source: 'Raça',
+      description: `Traço ancestral conferido pela linhagem dos ${race}s.`,
+    },
+  ];
+}
+
 export default function CreateHeroScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const { user } = useAuth();
+  const { createCharacter } = useCharacters();
 
   // Gerenciamento de Etapa do Assistente (Aula 3, Slide 12 - Estado Local)
   const [step, setStep] = useState<1 | 2>(1);
@@ -63,9 +279,74 @@ export default function CreateHeroScreen() {
   const [selectedAvatar, setSelectedAvatar] = useState<string>('🛡️');
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Estados da Etapa 2: Atributos D&D 5e
+  const [attributes, setAttributes] = useState<Attributes>({
+    strength: 15,
+    dexterity: 14,
+    constitution: 13,
+    intelligence: 12,
+    wisdom: 10,
+    charisma: 8,
+  });
+  const [isSaving, setIsSaving] = useState(false);
+
   const proficiencyBonus = calculateProficiencyBonus(level);
   const activeClassData = AVAILABLE_CLASSES.find((c) => c.name === selectedClass);
   const activeRaceData = AVAILABLE_RACES.find((r) => r.name === selectedRace);
+
+  // Cálculos dinâmicos de combate (PV, CA, Iniciativa, Deslocamento)
+  const conMod = calculateModifier(attributes.constitution);
+  const dexMod = calculateModifier(attributes.dexterity);
+  const hdDie = activeClassData?.hd || 'd8';
+  const hdNumber = parseInt(hdDie.replace('d', ''), 10) || 8;
+  const avgPerLevel = Math.floor(hdNumber / 2) + 1;
+  const calculatedHp = Math.max(
+    1,
+    hdNumber + conMod + Math.max(0, level - 1) * Math.max(1, avgPerLevel + conMod)
+  );
+  const calculatedCA = 10 + dexMod;
+  const calculatedSpeed =
+    selectedRace === 'Anão' || selectedRace === 'Halfling' || selectedRace === 'Gnomo'
+      ? 7.5
+      : selectedRace === 'Elfo'
+      ? 10.5
+      : 9.0;
+  const calculatedInitiative = dexMod;
+
+  // Ações de Atributos
+  const changeAttribute = (attr: keyof Attributes, delta: number) => {
+    setAttributes((prev) => ({
+      ...prev,
+      [attr]: Math.max(3, Math.min(20, prev[attr] + delta)),
+    }));
+  };
+
+  const setStandardArray = () => {
+    setAttributes({
+      strength: 15,
+      dexterity: 14,
+      constitution: 13,
+      intelligence: 12,
+      wisdom: 10,
+      charisma: 8,
+    });
+  };
+
+  const rollRandomAttributes = () => {
+    const rollStat = () => {
+      const rolls = Array.from({ length: 4 }, () => Math.floor(Math.random() * 6) + 1);
+      rolls.sort((a, b) => a - b);
+      return rolls[1] + rolls[2] + rolls[3];
+    };
+    setAttributes({
+      strength: rollStat(),
+      dexterity: rollStat(),
+      constitution: rollStat(),
+      intelligence: rollStat(),
+      wisdom: rollStat(),
+      charisma: rollStat(),
+    });
+  };
 
   // Validação da Etapa 1
   const handleNextStep = () => {
@@ -77,6 +358,67 @@ export default function CreateHeroScreen() {
     }
 
     setStep(2);
+  };
+
+  // Conclusão e Salvamento da Ficha (Camada de Estado + Dados no AsyncStorage)
+  const handleFinishCreation = async () => {
+    setIsSaving(true);
+    setErrorMessage('');
+
+    try {
+      const newChar = await createCharacter({
+        name: name.trim(),
+        title: title.trim() || undefined,
+        playerName: user ? user.name : 'Aventureiro',
+        race: selectedRace,
+        class: selectedClass,
+        level,
+        experience: (level - 1) * 1000,
+        alignment: selectedAlignment,
+        background: selectedBackground,
+        avatarEmoji: selectedAvatar,
+        proficiencyBonus,
+        speed: calculatedSpeed,
+        initiative: calculatedInitiative,
+        armorClass: calculatedCA,
+        currentHp: calculatedHp,
+        maxHp: calculatedHp,
+        tempHp: 0,
+        hitDice: `${level}${hdDie}`,
+        hitDiceUsed: 0,
+        deathSaves: { successes: 0, failures: 0 },
+        attributes,
+        savingThrowProficiencies: getSavingThrows(selectedClass),
+        skills: getDefaultSkills(selectedClass),
+        inventory: getDefaultInventory(selectedClass),
+        coins: { cp: 50, sp: 25, ep: 0, gp: 35, pp: 0 },
+        features: getDefaultFeatures(selectedClass, selectedRace),
+        bio: {
+          personalityTraits: 'Determinado a provar seu valor perante os deuses e companheiros de guilda.',
+          ideals: 'Honra e coragem diante dos perigos da escuridão.',
+          bonds: 'Luta pela glória de sua guilda e pela segurança dos inocentes.',
+          flaws: 'Costuma confiar demais em sua própria sorte.',
+          backstory: `Nascido como ${selectedRace}, ${name} abraçou a senda de ${selectedClass} guiado por sua vocação.`,
+          appearance: `Porte firme e olhar resoluto de quem já enfrentou provações.`,
+          notes: 'Ficha forjada no construtor de heróis.',
+        },
+      });
+
+      Alert.alert(
+        '🎉 Herói Forjado com Sucesso!',
+        `${newChar.name} (${newChar.class} Nv. ${newChar.level}) foi registrado na guilda e salvo no AsyncStorage!`,
+        [
+          {
+            text: 'Abrir Salão dos Heróis',
+            onPress: () => router.replace('/characters' as any),
+          },
+        ]
+      );
+    } catch {
+      setErrorMessage('Erro ao salvar ficha no dispositivo. Tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -93,13 +435,16 @@ export default function CreateHeroScreen() {
               ✨ Forjar Novo Aventureiro
             </Text>
             <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-              Etapa 1 de 2: Defina as raízes, vocação e conduta moral da sua lenda
+              {step === 1
+                ? 'Etapa 1 de 2: Defina as raízes, vocação e conduta moral da sua lenda'
+                : 'Etapa 2 de 2: Alinhe os atributos vitais e calcule estatísticas de combate'}
             </Text>
           </View>
 
           {/* Stepper Visual de Progresso */}
           <View style={styles.stepperContainer}>
-            <View
+            <Pressable
+              onPress={() => setStep(1)}
               style={[
                 styles.stepItem,
                 step === 1 && { borderBottomColor: theme.primary, borderBottomWidth: 3 },
@@ -113,8 +458,9 @@ export default function CreateHeroScreen() {
               >
                 1. Identidade & Raízes
               </Text>
-            </View>
-            <View
+            </Pressable>
+            <Pressable
+              onPress={name.trim().length >= 2 ? () => setStep(2) : undefined}
               style={[
                 styles.stepItem,
                 step === 2 && { borderBottomColor: theme.primary, borderBottomWidth: 3 },
@@ -128,7 +474,7 @@ export default function CreateHeroScreen() {
               >
                 2. Atributos & PV
               </Text>
-            </View>
+            </Pressable>
           </View>
 
           {/* Banner de Erro de Validação */}
@@ -432,11 +778,12 @@ export default function CreateHeroScreen() {
             </View>
           ) : (
             /* ========================================================
-             * ETAPA 2: ATRIBUTOS & ESTATÍSTICAS (PREVIEW DO COMMIT 11)
+             * ETAPA 2: DISTRIBUIÇÃO DE ATRIBUTOS & SALVAMENTO (COMMIT 11)
              * ======================================================== */
             <View style={styles.stepContent}>
+              {/* Resumo da Identidade Escolhida */}
               <RPGCard variant="highlight" style={styles.formCard}>
-                <RPGBadge label="ETAPA 1 CONCLUÍDA COM SUCESSO!" variant="gold" size="sm" />
+                <RPGBadge label="ETAPA 1 CONCLUÍDA" variant="gold" size="sm" />
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryEmoji}>{selectedAvatar}</Text>
                   <View style={{ flex: 1 }}>
@@ -453,22 +800,137 @@ export default function CreateHeroScreen() {
                 </View>
               </RPGCard>
 
+              {/* Preview Dinâmico de Combate */}
               <RPGCard style={styles.formCard}>
                 <Text style={[styles.cardTitle, { color: theme.text }]}>
-                  🎲 Etapa 2: Distribuição de Atributos & PV
+                  🛡️ Prévia de Combate Calculada
                 </Text>
-                <Text style={[styles.step2Desc, { color: theme.textSecondary }]}>
-                  Os dados básicos da Etapa 1 foram validados. No Commit #11, você distribuirá os 6 atributos principais (FOR, DES, CON, INT, SAB, CAR), calculará o PV e CA base e salvará a ficha no AsyncStorage!
-                </Text>
+                <View style={styles.combatPreviewGrid}>
+                  <View style={[styles.combatPreviewChip, { backgroundColor: `${theme.hp}15`, borderColor: theme.hp }]}>
+                    <Text style={[styles.combatPreviewLabel, { color: theme.hp }]}>❤️ PV MÁXIMO</Text>
+                    <Text style={[styles.combatPreviewValue, { color: theme.text }]}>{calculatedHp}</Text>
+                    <Text style={[styles.combatPreviewSub, { color: theme.textSecondary }]}>{hdDie} + CON</Text>
+                  </View>
 
-                <RPGButton
-                  title="⬅ Voltar para Etapa 1 (Editar Origem)"
-                  variant="secondary"
-                  icon="↩️"
-                  onPress={() => setStep(1)}
-                  style={{ marginTop: Spacing.sm }}
-                />
+                  <View style={[styles.combatPreviewChip, { backgroundColor: `${theme.armor}15`, borderColor: theme.armor }]}>
+                    <Text style={[styles.combatPreviewLabel, { color: theme.armor }]}>🛡️ CA BASE</Text>
+                    <Text style={[styles.combatPreviewValue, { color: theme.text }]}>{calculatedCA}</Text>
+                    <Text style={[styles.combatPreviewSub, { color: theme.textSecondary }]}>10 + DES</Text>
+                  </View>
+
+                  <View style={[styles.combatPreviewChip, { backgroundColor: `${theme.stamina}15`, borderColor: theme.stamina }]}>
+                    <Text style={[styles.combatPreviewLabel, { color: theme.stamina }]}>⚡ INICIATIVA</Text>
+                    <Text style={[styles.combatPreviewValue, { color: theme.text }]}>{formatModifier(calculatedInitiative)}</Text>
+                    <Text style={[styles.combatPreviewSub, { color: theme.textSecondary }]}>Mod DES</Text>
+                  </View>
+
+                  <View style={[styles.combatPreviewChip, { backgroundColor: `${theme.mana}15`, borderColor: theme.mana }]}>
+                    <Text style={[styles.combatPreviewLabel, { color: theme.mana }]}>🏃 DESLOC.</Text>
+                    <Text style={[styles.combatPreviewValue, { color: theme.text }]}>{calculatedSpeed}m</Text>
+                    <Text style={[styles.combatPreviewSub, { color: theme.textSecondary }]}>{selectedRace}</Text>
+                  </View>
+                </View>
               </RPGCard>
+
+              {/* Alocação dos 6 Atributos */}
+              <RPGCard style={styles.formCard}>
+                <View style={styles.cardHeaderRow}>
+                  <Text style={[styles.cardTitle, { color: theme.text }]}>
+                    🎲 6 Atributos D&D 5e
+                  </Text>
+                  <View style={{ flexDirection: 'row', gap: 6 }}>
+                    <RPGButton
+                      title="Padrão"
+                      variant="secondary"
+                      size="sm"
+                      onPress={setStandardArray}
+                    />
+                    <RPGButton
+                      title="Rolar 4d6"
+                      variant="secondary"
+                      icon="🎲"
+                      size="sm"
+                      onPress={rollRandomAttributes}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.attrList}>
+                  {ATTRIBUTE_LABELS.map((item) => {
+                    const val = attributes[item.key];
+                    const mod = calculateModifier(val);
+                    return (
+                      <View
+                        key={item.key}
+                        style={[
+                          styles.attrRowBox,
+                          { backgroundColor: theme.backgroundInput, borderColor: theme.border },
+                        ]}
+                      >
+                        <View style={{ flex: 1 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Text style={[styles.attrShortName, { color: theme.primary }]}>
+                              {item.short}
+                            </Text>
+                            <Text style={[styles.attrFullName, { color: theme.text }]}>
+                              {item.full}
+                            </Text>
+                          </View>
+                          <Text style={[styles.attrDesc, { color: theme.textSecondary }]}>
+                            {item.desc}
+                          </Text>
+                        </View>
+
+                        <View style={styles.attrControls}>
+                          <View
+                            style={[
+                              styles.modBadge,
+                              { backgroundColor: `${theme.primary}20`, borderColor: theme.primary },
+                            ]}
+                          >
+                            <Text style={[styles.modText, { color: theme.primary }]}>
+                              {formatModifier(mod)}
+                            </Text>
+                          </View>
+
+                          <Pressable
+                            onPress={() => changeAttribute(item.key, -1)}
+                            style={[styles.attrBtn, { borderColor: theme.border }]}
+                          >
+                            <Text style={[styles.attrBtnText, { color: theme.text }]}>-</Text>
+                          </Pressable>
+
+                          <Text style={[styles.attrScore, { color: theme.text }]}>{val}</Text>
+
+                          <Pressable
+                            onPress={() => changeAttribute(item.key, 1)}
+                            style={[styles.attrBtn, { borderColor: theme.border }]}
+                          >
+                            <Text style={[styles.attrBtnText, { color: theme.text }]}>+</Text>
+                          </Pressable>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              </RPGCard>
+
+              {/* Botões de Ação Final */}
+              <RPGButton
+                title="✨ Forjar e Salvar Aventureiro"
+                variant="primary"
+                icon="🛡️"
+                loading={isSaving}
+                onPress={handleFinishCreation}
+                style={{ marginTop: Spacing.xs }}
+              />
+
+              <RPGButton
+                title="⬅ Voltar para Etapa 1 (Editar Origem)"
+                variant="secondary"
+                icon="↩️"
+                onPress={() => setStep(1)}
+              />
             </View>
           )}
         </ScrollView>
@@ -661,8 +1123,89 @@ const styles = StyleSheet.create({
   summaryDesc: {
     fontSize: 12,
   },
-  step2Desc: {
+  combatPreviewGrid: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 4,
+  },
+  combatPreviewChip: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+  combatPreviewLabel: {
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  combatPreviewValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  combatPreviewSub: {
+    fontSize: 9,
+  },
+  attrList: {
+    gap: 8,
+    marginTop: 4,
+  },
+  attrRowBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    gap: 8,
+  },
+  attrShortName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  attrFullName: {
     fontSize: 13,
-    lineHeight: 18,
+    fontWeight: '600',
+  },
+  attrDesc: {
+    fontSize: 10,
+    marginTop: 2,
+  },
+  attrControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  modBadge: {
+    paddingVertical: 3,
+    paddingHorizontal: 7,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    minWidth: 32,
+    alignItems: 'center',
+  },
+  modText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  attrBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  attrBtnText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  attrScore: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    minWidth: 24,
+    textAlign: 'center',
   },
 });

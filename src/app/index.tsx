@@ -25,7 +25,7 @@ const PLANNED_SCREENS = [
   { id: '3', title: '3. Recuperação de Senha (PRONTA)', desc: 'Redefinição de acesso com envio simulado de código e timer de reenvio', icon: '🔑', ready: true, route: '/auth/forgot-password' },
   // Módulo 2: Gerenciamento & Ficha do RPG (Iniciado no Commit 07!)
   { id: '4', title: '4. Meus Personagens (HUB) (PRONTA)', desc: 'Dashboard com busca em tempo real, filtros por classe, barra de vida e status', icon: '🛡️', ready: true, route: '/characters' },
-  { id: '5', title: '5. Criação de Herói (PRONTA - Etapa 1)', desc: 'Assistente em etapas: raça, classe, atributos, tendência e avatar', icon: '✨', ready: true, route: '/create' },
+  { id: '5', title: '5. Criação de Herói (PRONTA)', desc: 'Assistente completo em 2 etapas: origem, alocação de atributos, PV e salvamento', icon: '✨', ready: true, route: '/create' },
   { id: '6', title: '6. Ficha Geral (Combate & Atributos)', desc: 'HP dinâmico, CA, Iniciativa e grid dos 6 atributos principais', icon: '⚔️', ready: false },
   { id: '7', title: '7. Perícias & Salvaguardas', desc: '18 perícias clássicas com cálculo de bônus e proficiência', icon: '🎯', ready: false },
   { id: '8', title: '8. Grimório & Magias', desc: 'Controle de Spell Slots por círculo e magias preparadas', icon: '🔮', ready: false },
@@ -67,12 +67,12 @@ export default function HomeScreen() {
 
         {/* Hero Card do Projeto */}
         <RPGCard variant="highlight" style={styles.heroCard}>
-          <RPGBadge label="COMMIT #10 • v0.10.0 • CRIAÇÃO DE HERÓI (5/11 TELAS)" variant="gold" />
+          <RPGBadge label="COMMIT #11 • v0.11.0 • CRIAÇÃO DE HERÓI COMPLETA (5/11 TELAS)" variant="gold" />
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             ⚔️ QuestSheet RPG
           </Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            A Tela 5 (Criação de Herói) foi construída com seleção visual de raças, classes, alinhamento moral e validações!
+            A Tela 5 (Criação de Herói) foi finalizada com distribuição de atributos D&D 5e, cálculo dinâmico de combate e persistência no AsyncStorage!
           </Text>
 
           {/* Card de Sessão do Usuário */}
@@ -124,8 +124,8 @@ export default function HomeScreen() {
           />
 
           <View style={styles.tagRow}>
-            <RPGBadge label="SemVer v0.10.0" variant="hp" size="sm" />
-            <RPGBadge label="Etapa 1 Concluída" variant="mana" size="sm" />
+            <RPGBadge label="SemVer v0.11.0" variant="hp" size="sm" />
+            <RPGBadge label="Criação 100% Pronta" variant="mana" size="sm" />
             <RPGBadge label="Telas 5/11 Concluídas" variant="gold" size="sm" />
           </View>
         </RPGCard>
@@ -357,16 +357,16 @@ export default function HomeScreen() {
             ✅ Checklist do Repositório (Prof. Garrido)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commits 01 a 09 concluídos e sincronizados no GitHub
+            ✔ Commits 01 a 10 concluídos e sincronizados no GitHub
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commit 10 pronto: Tela 5 — Criação de Herói (Etapa 1) com raças, classes e vocação (v0.10.0)
+            ✔ Commit 11 pronto: Tela 5 — Criação de Herói (Etapa 2) concluída com atributos e salvamento (v0.11.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
             ✔ 5 de 11 telas concluídas e navegáveis com estado local + global
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Próximo: Finalização da Criação de Herói (Etapa 2 - Atributos, PV e Persistência) (Commit 11 - v0.11.0)
+            ✔ Próximo: Tela 6 — Ficha Geral / HUB 2 de Combate & PV Dinâmico (Commit 12 - v0.12.0)
           </Text>
         </RPGCard>
       </ScrollView>
