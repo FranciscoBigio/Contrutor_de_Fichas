@@ -1,23 +1,24 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+import { ThemeProvider, useTheme } from '@/context/theme-context';
+
+function RootNavigator() {
+  const { theme, isDark } = useTheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <>
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: colorScheme === 'dark' ? '#12141A' : '#1A202C',
+            backgroundColor: theme.backgroundCard,
           },
-          headerTintColor: '#E2E8F0',
+          headerTintColor: theme.text,
           headerTitleStyle: {
             fontWeight: 'bold',
           },
           contentStyle: {
-            backgroundColor: colorScheme === 'dark' ? '#0B0D12' : '#F7FAFC',
+            backgroundColor: theme.background,
           },
         }}
       >
@@ -28,7 +29,15 @@ export default function RootLayout() {
           }}
         />
       </Stack>
-      <StatusBar style="light" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <RootNavigator />
     </ThemeProvider>
   );
 }

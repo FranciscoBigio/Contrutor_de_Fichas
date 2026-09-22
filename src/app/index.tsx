@@ -1,4 +1,15 @@
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import {
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
+import { Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/context/theme-context';
 
 const PLANNED_SCREENS = [
   // Módulo 1: Autenticação & Acesso
@@ -17,70 +28,165 @@ const PLANNED_SCREENS = [
 ];
 
 export default function HomeScreen() {
+  const { theme, isDark, toggleTheme } = useTheme();
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.container}>
         {/* Banner do Aluno e Disciplina (Universidade de Vassouras) */}
-        <View style={styles.academicBanner}>
-          <Text style={styles.institutionText}>UNIVERSIDADE DE VASSOURAS • ENGENHARIA DE SOFTWARE</Text>
-          <Text style={styles.courseText}>Disciplina: Aplicativos Híbridos • Prof. Márcio Garrido</Text>
-          <Text style={styles.authorHighlight}>Aluno: Francisco Bigio</Text>
+        <View
+          style={[
+            styles.academicBanner,
+            {
+              backgroundColor: theme.backgroundCard,
+              borderLeftColor: theme.primary,
+              borderColor: theme.border,
+            },
+          ]}
+        >
+          <Text style={[styles.institutionText, { color: theme.textSecondary }]}>
+            UNIVERSIDADE DE VASSOURAS • ENGENHARIA DE SOFTWARE
+          </Text>
+          <Text style={[styles.courseText, { color: theme.text }]}>
+            Disciplina: Aplicativos Híbridos • Prof. Márcio Garrido
+          </Text>
+          <Text style={[styles.authorHighlight, { color: theme.primary }]}>
+            Aluno: Francisco Bigio
+          </Text>
         </View>
 
         {/* Hero Card do Projeto */}
-        <View style={styles.heroCard}>
-          <Text style={styles.badge}>COMMIT #01 • v0.1.0 • BASE LIMPA</Text>
-          <Text style={styles.heroTitle}>⚔️ QuestSheet RPG</Text>
-          <Text style={styles.heroSubtitle}>
-            Aplicativo mobile híbrido em React Native / Expo com arquitetura em 3 camadas, navegação em grafo e segurança OWASP Mobile.
+        <View
+          style={[
+            styles.heroCard,
+            {
+              backgroundColor: theme.backgroundCard,
+              borderColor: theme.border,
+            },
+          ]}
+        >
+          <Text style={[styles.badge, { backgroundColor: theme.primary, color: theme.primaryText }]}>
+            COMMIT #02 • v0.2.0 • TEMA FANTASY ATIVO
+          </Text>
+          <Text style={[styles.heroTitle, { color: theme.text }]}>
+            ⚔️ QuestSheet RPG
+          </Text>
+          <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
+            Aplicativo mobile híbrido com tema dinâmico Dark Fantasy / Pergaminho gerenciado via Context API e persistido no AsyncStorage.
           </Text>
 
+          {/* Botão Interativo de Alternância de Tema (Demonstrando Context API) */}
+          <TouchableOpacity
+            style={[
+              styles.themeToggleBtn,
+              {
+                backgroundColor: theme.backgroundElevated,
+                borderColor: theme.primary,
+              },
+            ]}
+            onPress={toggleTheme}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.themeToggleIcon}>{isDark ? '☀️' : '🌙'}</Text>
+            <Text style={[styles.themeToggleText, { color: theme.text }]}>
+              Modo Atual: <Text style={{ color: theme.primary, fontWeight: 'bold' }}>{isDark ? 'Dark Fantasy' : 'Pergaminho (Light)'}</Text> (Toque para alternar)
+            </Text>
+          </TouchableOpacity>
+
           <View style={styles.tagRow}>
-            <Text style={styles.tag}>Expo SDK 57</Text>
-            <Text style={styles.tag}>React Native 0.86</Text>
-            <Text style={styles.tag}>TypeScript</Text>
-            <Text style={styles.tagHighlight}>SemVer v0.1.0</Text>
-            <Text style={styles.tagHighlight}>11 Telas Mapeadas</Text>
-            <Text style={styles.tagHighlight}>24 Commits</Text>
+            <Text style={[styles.tag, { backgroundColor: theme.backgroundElevated, color: theme.textSecondary, borderColor: theme.border }]}>
+              Expo SDK 57
+            </Text>
+            <Text style={[styles.tag, { backgroundColor: theme.backgroundElevated, color: theme.textSecondary, borderColor: theme.border }]}>
+              React Native 0.86
+            </Text>
+            <Text style={[styles.tagHighlight, { backgroundColor: theme.hpBg, color: theme.hp, borderColor: theme.hp }]}>
+              SemVer v0.2.0
+            </Text>
+            <Text style={[styles.tagHighlight, { backgroundColor: theme.manaBg, color: theme.mana, borderColor: theme.mana }]}>
+              Context API Global
+            </Text>
+          </View>
+        </View>
+
+        {/* Paleta de Cores Semânticas do RPG (Tokens de Design da Aula 3) */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            🎨 Paleta Semântica de RPG (Design Tokens)
+          </Text>
+          <View style={styles.paletteGrid}>
+            <View style={[styles.paletteBadge, { backgroundColor: theme.primary }]}>
+              <Text style={[styles.paletteText, { color: theme.primaryText }]}>Ouro Épico</Text>
+            </View>
+            <View style={[styles.paletteBadge, { backgroundColor: theme.accent }]}>
+              <Text style={[styles.paletteText, { color: '#FFFFFF' }]}>Carmesim</Text>
+            </View>
+            <View style={[styles.paletteBadge, { backgroundColor: theme.hp }]}>
+              <Text style={[styles.paletteText, { color: '#FFFFFF' }]}>PV / Vida</Text>
+            </View>
+            <View style={[styles.paletteBadge, { backgroundColor: theme.mana }]}>
+              <Text style={[styles.paletteText, { color: '#FFFFFF' }]}>Mana / Magia</Text>
+            </View>
+            <View style={[styles.paletteBadge, { backgroundColor: theme.stamina }]}>
+              <Text style={[styles.paletteText, { color: '#0B0D12' }]}>Dados / Vigor</Text>
+            </View>
+            <View style={[styles.paletteBadge, { backgroundColor: theme.healing }]}>
+              <Text style={[styles.paletteText, { color: '#FFFFFF' }]}>Cura</Text>
+            </View>
           </View>
         </View>
 
         {/* As 3 Camadas de Arquitetura (Slide 5 da Aula 3) */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🏛️ Arquitetura em 3 Camadas</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            🏛️ Arquitetura em 3 Camadas
+          </Text>
           <View style={styles.layerContainer}>
-            <View style={styles.layerCard}>
+            <View style={[styles.layerCard, { backgroundColor: theme.backgroundCard, borderColor: theme.border }]}>
               <Text style={styles.layerIcon}>🖥️</Text>
-              <Text style={styles.layerTitle}>Apresentação</Text>
-              <Text style={styles.layerDesc}>Componentes em árvore, StyleSheet com Flexbox, Expo Router e navegação Stack/Tabs.</Text>
+              <Text style={[styles.layerTitle, { color: theme.text }]}>1. Apresentação (UI)</Text>
+              <Text style={[styles.layerDesc, { color: theme.textSecondary }]}>
+                Componentes em árvore, StyleSheet Flexbox e suporte a Dark Fantasy / Pergaminho.
+              </Text>
             </View>
-            <View style={styles.layerCard}>
+            <View style={[styles.layerCard, { backgroundColor: theme.backgroundCard, borderColor: theme.border }]}>
               <Text style={styles.layerIcon}>🧠</Text>
-              <Text style={styles.layerTitle}>Estado</Text>
-              <Text style={styles.layerDesc}>Local com useState (inputs, olho da senha) e Global com Context API (AuthContext, Fichas).</Text>
+              <Text style={[styles.layerTitle, { color: theme.text }]}>2. Estado (Context API)</Text>
+              <Text style={[styles.layerDesc, { color: theme.textSecondary }]}>
+                ThemeContext global distribuído via ThemeProvider, sem prop drilling (Aula 3).
+              </Text>
             </View>
-            <View style={styles.layerCard}>
+            <View style={[styles.layerCard, { backgroundColor: theme.backgroundCard, borderColor: theme.border }]}>
               <Text style={styles.layerIcon}>💾</Text>
-              <Text style={styles.layerTitle}>Dados & Segurança</Text>
-              <Text style={styles.layerDesc}>SecureStore (OWASP M2 p/ tokens JWT), AsyncStorage (tema/UI) e Offline-First com cache.</Text>
+              <Text style={[styles.layerTitle, { color: theme.text }]}>3. Dados & Resiliência</Text>
+              <Text style={[styles.layerDesc, { color: theme.textSecondary }]}>
+                Preferencia de tema persistida via AsyncStorage (Aula 4) e tokens via SecureStore.
+              </Text>
             </View>
           </View>
         </View>
 
         {/* Lista das 11 Telas Mapeadas */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🗺️ Grafo de Navegação — 11 Telas</Text>
-          <Text style={styles.sectionDescription}>
-            Estrutura de telas dividida em nós com navegação Stack e Tabs, centralizada na tela HUB:
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            🗺️ Grafo de Navegação — 11 Telas
           </Text>
-
           <View style={styles.screenList}>
             {PLANNED_SCREENS.map((item) => (
-              <View key={item.id} style={styles.screenCard}>
+              <View
+                key={item.id}
+                style={[
+                  styles.screenCard,
+                  {
+                    backgroundColor: theme.backgroundCard,
+                    borderColor: theme.border,
+                  },
+                ]}
+              >
                 <Text style={styles.screenIcon}>{item.icon}</Text>
                 <View style={styles.screenTextContainer}>
-                  <Text style={styles.screenTitle}>{item.title}</Text>
-                  <Text style={styles.screenDesc}>{item.desc}</Text>
+                  <Text style={[styles.screenTitle, { color: theme.text }]}>{item.title}</Text>
+                  <Text style={[styles.screenDesc, { color: theme.textSecondary }]}>{item.desc}</Text>
                 </View>
               </View>
             ))}
@@ -88,14 +194,22 @@ export default function HomeScreen() {
         </View>
 
         {/* Checklist do Repositório (Slide 17 da Aula 5) */}
-        <View style={styles.checklistCard}>
-          <Text style={styles.checklistTitle}>✅ Checklist do Repositório (Prof. Garrido)</Text>
-          <Text style={styles.checkItem}>✔ README.md claro detalhando arquitetura, telas e roadmap</Text>
-          <Text style={styles.checkItem}>✔ .gitignore correto sem node_modules/ nem segredos</Text>
-          <Text style={styles.checkItem}>✔ Mínimo de 6 telas: 11 telas planejadas</Text>
-          <Text style={styles.checkItem}>✔ Mínimo de 20 commits: 24 commits descritivos mapeados</Text>
-          <Text style={styles.checkItem}>✔ Armazenamento seguro de token JWT via SecureStore (OWASP M2)</Text>
-          <Text style={styles.checkItem}>✔ Estrutura de pastas modular conforme a anatomia do Expo</Text>
+        <View style={[styles.checklistCard, { backgroundColor: theme.backgroundCard, borderColor: theme.border }]}>
+          <Text style={[styles.checklistTitle, { color: theme.text }]}>
+            ✅ Checklist do Repositório (Prof. Garrido)
+          </Text>
+          <Text style={[styles.checkItem, { color: theme.healing }]}>
+            ✔ Commit 01 efetuado com sucesso (v0.1.0)
+          </Text>
+          <Text style={[styles.checkItem, { color: theme.healing }]}>
+            ✔ Commit 02 em execução: Tema Fantasy Dark & Light configurado
+          </Text>
+          <Text style={[styles.checkItem, { color: theme.healing }]}>
+            ✔ Context API global funcionando com ThemeProvider nativo
+          </Text>
+          <Text style={[styles.checkItem, { color: theme.healing }]}>
+            ✔ Persistência de preferências de UI no AsyncStorage (Aula 4)
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -105,70 +219,71 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0B0D12',
   },
   container: {
-    padding: 16,
-    gap: 18,
+    padding: Spacing.md,
+    gap: Spacing.md,
   },
   academicBanner: {
-    backgroundColor: '#11141C',
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: Radius.md,
+    padding: Spacing.sm + 4,
     borderLeftWidth: 4,
-    borderLeftColor: '#C59B27',
     borderWidth: 1,
-    borderColor: '#1E2330',
     gap: 4,
   },
   institutionText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
-    color: '#94A3B8',
     letterSpacing: 0.5,
   },
   courseText: {
     fontSize: 12,
-    color: '#CBD5E1',
   },
   authorHighlight: {
     fontSize: 13,
-    color: '#C59B27',
     fontWeight: 'bold',
     marginTop: 2,
   },
   heroCard: {
-    backgroundColor: '#151922',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: Radius.lg,
+    padding: Spacing.md + 4,
     borderWidth: 1,
-    borderColor: '#262D3D',
     alignItems: 'center',
+    gap: Spacing.sm,
   },
   badge: {
-    backgroundColor: '#C59B27',
-    color: '#0B0D12',
     fontWeight: 'bold',
     fontSize: 11,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 999,
-    marginBottom: 10,
+    borderRadius: Radius.full,
     overflow: 'hidden',
   },
   heroTitle: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 6,
     textAlign: 'center',
   },
   heroSubtitle: {
     fontSize: 13,
-    color: '#94A3B8',
     textAlign: 'center',
     lineHeight: 18,
-    marginBottom: 14,
+  },
+  themeToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    gap: 8,
+    marginVertical: 4,
+  },
+  themeToggleIcon: {
+    fontSize: 18,
+  },
+  themeToggleText: {
+    fontSize: 12,
   },
   tagRow: {
     flexDirection: 'row',
@@ -177,48 +292,48 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tag: {
-    backgroundColor: '#1C2230',
-    color: '#CBD5E1',
     fontSize: 11,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: Radius.sm,
     borderWidth: 1,
-    borderColor: '#334155',
   },
   tagHighlight: {
-    backgroundColor: '#C59B2720',
-    color: '#EAB308',
     fontSize: 11,
     fontWeight: 'bold',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: Radius.sm,
     borderWidth: 1,
-    borderColor: '#EAB30840',
   },
   section: {
     gap: 10,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 'bold',
-    color: '#F8FAFC',
   },
-  sectionDescription: {
-    fontSize: 13,
-    color: '#94A3B8',
-    lineHeight: 18,
+  paletteGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  paletteBadge: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: Radius.sm,
+  },
+  paletteText: {
+    fontSize: 11,
+    fontWeight: 'bold',
   },
   layerContainer: {
     gap: 8,
   },
   layerCard: {
-    backgroundColor: '#131620',
-    borderRadius: 10,
+    borderRadius: Radius.md,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#202636',
   },
   layerIcon: {
     fontSize: 20,
@@ -227,12 +342,10 @@ const styles = StyleSheet.create({
   layerTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#E2E8F0',
     marginBottom: 2,
   },
   layerDesc: {
     fontSize: 12,
-    color: '#828FA3',
     lineHeight: 16,
   },
   screenList: {
@@ -241,11 +354,9 @@ const styles = StyleSheet.create({
   screenCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#131620',
-    borderRadius: 10,
+    borderRadius: Radius.md,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#202636',
     gap: 10,
   },
   screenIcon: {
@@ -257,31 +368,25 @@ const styles = StyleSheet.create({
   screenTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F1F5F9',
     marginBottom: 2,
   },
   screenDesc: {
     fontSize: 11,
-    color: '#64748B',
     lineHeight: 15,
   },
   checklistCard: {
-    backgroundColor: '#0F131C',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
     borderWidth: 1,
-    borderColor: '#1E2330',
     gap: 6,
   },
   checklistTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#E2E8F0',
     marginBottom: 4,
   },
   checkItem: {
     fontSize: 12,
-    color: '#A3E635',
     lineHeight: 18,
   },
 });
