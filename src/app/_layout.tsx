@@ -114,6 +114,13 @@ function RootNavigator() {
             headerBackTitle: 'Voltar',
           }}
         />
+        <Stack.Screen
+          name="settings"
+          options={{
+            title: '⚙️ Configurações',
+            headerBackTitle: 'Início',
+          }}
+        />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </>

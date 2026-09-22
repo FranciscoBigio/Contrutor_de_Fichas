@@ -67,12 +67,12 @@ export default function HomeScreen() {
 
         {/* Hero Card do Projeto */}
         <RPGCard variant="highlight" style={styles.heroCard}>
-          <RPGBadge label="COMMIT #18 • v0.18.0 • 100% DAS TELAS CONCLUÍDAS (11/11)" variant="gold" />
+          <RPGBadge label="COMMIT #19 • v0.19.0 • CONFIGURAÇÕES DO SISTEMA (TELA 12 BÔNUS)" variant="gold" />
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             ⚔️ QuestSheet RPG
           </Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            Todas as 11 telas planejadas estão 100% funcionais! A Tela 11 (Rolador de Dados) traz dados poliédricos (d4 a d100), vantagem/desvantagem e testes de atributos integrados!
+            A Tela 12 (Configurações do Sistema) traz personalização de temas, feedback tátil, regras de jogo, gerenciamento de dados offline e perfil seguro!
           </Text>
 
           {/* Card de Sessão do Usuário */}
@@ -115,33 +115,48 @@ export default function HomeScreen() {
             )}
           </View>
 
-          <RPGButton
-            title={`Alternar para ${isDark ? 'Pergaminho (Light)' : 'Dark Fantasy'}`}
-            icon={isDark ? '☀️' : '🌙'}
-            variant="secondary"
-            onPress={toggleTheme}
-            style={{ width: '100%' }}
-          />
+          <View style={{ flexDirection: 'row', gap: Spacing.xs, width: '100%' }}>
+            <RPGButton
+              title="⚙️ Configurações"
+              variant="primary"
+              icon="🛠️"
+              onPress={() => router.push('/settings' as any)}
+              style={{ flex: 1 }}
+            />
+            <RPGButton
+              title={isDark ? '☀️ Light' : '🌙 Dark'}
+              variant="secondary"
+              onPress={toggleTheme}
+              style={{ flex: 0.8 }}
+            />
+          </View>
 
           <View style={styles.tagRow}>
-            <RPGBadge label="SemVer v0.18.0" variant="hp" size="sm" />
-            <RPGBadge label="11/11 Telas Prontas" variant="mana" size="sm" />
-            <RPGBadge label="Rolador Poliédrico" variant="gold" size="sm" />
+            <RPGBadge label="SemVer v0.19.0" variant="hp" size="sm" />
+            <RPGBadge label="12 Telas Prontas" variant="mana" size="sm" />
+            <RPGBadge label="Configurações & Dados" variant="gold" size="sm" />
           </View>
         </RPGCard>
 
-        {/* Atalhos Rápidos para as 11 Telas Concluídas */}
+        {/* Atalhos Rápidos para as Telas Concluídas */}
         <RPGCard style={styles.actionCard}>
           <Text style={[styles.actionTitle, { color: theme.text }]}>
-            🚀 Atalhos para as Telas Prontas (11 de 11)
+            🚀 Atalhos para as Telas Prontas (12 Telas)
           </Text>
           <Text style={[styles.actionDesc, { color: theme.textSecondary }]}>
-            Todas as 11 telas do aplicativo estão 100% operacionais e interligadas:
+            Todas as 11 telas do RPG + Tela 12 de Configurações 100% integradas:
           </Text>
           <View style={{ gap: Spacing.xs }}>
             <RPGButton
-              title="🎲 Abrir Tela 11: Rolador de Dados Poliédrico"
+              title="⚙️ Abrir Tela 12: Configurações & Ajustes"
               variant="primary"
+              icon="🛠️"
+              onPress={() => router.push('/settings' as any)}
+              style={{ width: '100%' }}
+            />
+            <RPGButton
+              title="🎲 Abrir Tela 11: Rolador de Dados Poliédrico"
+              variant="secondary"
               icon="👑"
               onPress={() => router.push((activeCharacter ? `/character/${activeCharacter.id}/dice` : '/dice') as any)}
               style={{ width: '100%' }}
@@ -402,16 +417,16 @@ export default function HomeScreen() {
             ✅ Checklist do Repositório (Prof. Garrido)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commits 01 a 17 concluídos e sincronizados no GitHub
+            ✔ Commits 01 a 18 concluídos e sincronizados no GitHub
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commit 18 pronto: Tela 11 — Rolador de Dados Poliédricos Integrado (d4 a d100) com Histórico (v0.18.0)
+            ✔ Commit 19 pronto: Tela 12 (Bônus) — Configurações, Preferências de Jogo, Temas e Armazenamento (v0.19.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ 11 de 11 TELAS CONCLUÍDAS (100% do escopo do aplicativo entregue!)
+            ✔ 12 TELAS CONCLUÍDAS (11 do escopo de RPG + 1 de Configurações do Sistema)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Próximo: Commit 19 — Sistema avançado de filtros e ordenação do inventário / grimório
+            ✔ Próximo: Commit 20 — Exportação e Importação de fichas em formato JSON para backup offline
           </Text>
         </RPGCard>
       </ScrollView>
