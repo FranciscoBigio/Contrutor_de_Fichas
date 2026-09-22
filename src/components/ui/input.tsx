@@ -37,6 +37,28 @@ export function RPGInput({
     return theme.border;
   };
 
+  const getFocusShadow = () => {
+    if (error) {
+      return {
+        shadowColor: theme.hp,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 2,
+      };
+    }
+    if (isFocused) {
+      return {
+        shadowColor: theme.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 2,
+      };
+    }
+    return {};
+  };
+
   return (
     <View style={styles.container}>
       {label ? (
@@ -48,6 +70,7 @@ export function RPGInput({
       <View
         style={[
           styles.inputContainer,
+          getFocusShadow(),
           {
             backgroundColor: theme.backgroundInput,
             borderColor: getBorderColor(),

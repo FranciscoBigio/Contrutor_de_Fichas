@@ -73,6 +73,10 @@ export function RPGHpBar({
             {
               width: `${percent}%`,
               backgroundColor: barColor,
+              shadowColor: barColor,
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.45,
+              shadowRadius: 3,
             },
           ]}
         />

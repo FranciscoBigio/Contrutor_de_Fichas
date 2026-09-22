@@ -67,12 +67,12 @@ export default function HomeScreen() {
 
         {/* Hero Card do Projeto */}
         <RPGCard variant="highlight" style={styles.heroCard}>
-          <RPGBadge label="COMMIT #22 • v0.22.0 • FEEDBACK TÁTIL & HÁPTICO" variant="gold" />
+          <RPGBadge label="COMMIT #23 • v0.23.0 • POLIMENTO VISUAL & MICROINTERAÇÕES" variant="gold" />
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             ⚔️ QuestSheet RPG
           </Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            Feedback háptico imersivo via expo-haptics integrado em rolagens de dados, 20 Natural (Crítico), 1 Natural (Desastre), dano, cura e descansos!
+            Auras de sombras temáticas (Shadows), foco iluminado em inputs, brilho semântico em barras de PV e microinterações táteis nas 12 telas!
           </Text>
 
           {/* Card de Sessão do Usuário */}
@@ -132,9 +132,9 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.tagRow}>
-            <RPGBadge label="SemVer v0.22.0" variant="hp" size="sm" />
-            <RPGBadge label="22 Commits Concluídos" variant="mana" size="sm" />
-            <RPGBadge label="Feedback Háptico" variant="gold" size="sm" />
+            <RPGBadge label="SemVer v0.23.0" variant="hp" size="sm" />
+            <RPGBadge label="23 Commits Concluídos" variant="mana" size="sm" />
+            <RPGBadge label="Sombras & Auras" variant="gold" size="sm" />
           </View>
         </RPGCard>
 
@@ -417,16 +417,16 @@ export default function HomeScreen() {
             ✅ Checklist do Repositório (Prof. Garrido)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commits 01 a 21 concluídos e sincronizados no GitHub
+            ✔ Commits 01 a 22 concluídos e sincronizados no GitHub
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commit 22 pronto: Feedback háptico e vibrações táteis no rolador de dados e combate (v0.22.0)
+            ✔ Commit 23 pronto: Polimento visual, sombras temáticas (Shadows) e microinterações táteis nas 12 telas (v0.23.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ META DE 20 COMMITS SUPERADA! (22 commits com arquitetura em 3 camadas e 12 telas)
+            ✔ META DE 20 COMMITS SUPERADA! (23 commits com arquitetura em 3 camadas e 12 telas)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Próximo: Commit 23 — Polimento visual, sombras temáticas e microinterações nas 12 telas
+            ✔ Próximo: Commit 24 — Finalização de documentação completa, capturas de tela e entrega final (v1.0.0)
           </Text>
         </RPGCard>
       </ScrollView>

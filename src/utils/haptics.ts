@@ -92,3 +92,4 @@ export async function rpgHapticButton(): Promise<void> {
     // Ignora silenciosamente
   }
 }
+

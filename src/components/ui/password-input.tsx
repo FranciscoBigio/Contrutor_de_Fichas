@@ -10,6 +10,7 @@ import {
 
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { rpgHapticSelection } from '@/utils/haptics';
 
 export interface RPGPasswordInputProps extends TextInputProps {
   label?: string;
@@ -43,6 +44,33 @@ export function RPGPasswordInput({
     return theme.border;
   };
 
+  const getFocusShadow = () => {
+    if (error) {
+      return {
+        shadowColor: theme.hp,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 2,
+      };
+    }
+    if (isFocused) {
+      return {
+        shadowColor: theme.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 2,
+      };
+    }
+    return {};
+  };
+
+  const handleTogglePassword = () => {
+    rpgHapticSelection();
+    setIsPasswordVisible((prev) => !prev);
+  };
+
   return (
     <View style={styles.container}>
       {label ? (
@@ -54,6 +82,7 @@ export function RPGPasswordInput({
       <View
         style={[
           styles.inputContainer,
+          getFocusShadow(),
           {
             backgroundColor: theme.backgroundInput,
             borderColor: getBorderColor(),
@@ -84,7 +113,7 @@ export function RPGPasswordInput({
         />
 
         <TouchableOpacity
-          onPress={() => setIsPasswordVisible((prev) => !prev)}
+          onPress={handleTogglePassword}
           style={styles.eyeButton}
           activeOpacity={0.7}
           accessibilityLabel={isPasswordVisible ? 'Ocultar senha' : 'Ver senha'}

@@ -7,8 +7,9 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { Radius, Spacing } from '@/constants/theme';
+import { Radius, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { rpgHapticButton } from '@/utils/haptics';
 
 export interface RPGButtonProps {
   title: string;
@@ -77,16 +78,47 @@ export function RPGButton({
     }
   };
 
+  const getShadowStyle = (): ViewStyle => {
+    if (disabled || variant === 'ghost') return {};
+    switch (variant) {
+      case 'primary':
+        return {
+          ...Shadows.glowGold,
+          shadowColor: theme.primary,
+          shadowOpacity: 0.28,
+          elevation: 3,
+        };
+      case 'danger':
+        return {
+          ...Shadows.glowHp,
+          shadowColor: theme.accent,
+          shadowOpacity: 0.28,
+          elevation: 3,
+        };
+      case 'secondary':
+        return Shadows.sm;
+      default:
+        return {};
+    }
+  };
+
   const sizePadding = {
     sm: { paddingVertical: 6, paddingHorizontal: 10, fontSize: 12 },
     md: { paddingVertical: 12, paddingHorizontal: 16, fontSize: 14 },
     lg: { paddingVertical: 16, paddingHorizontal: 24, fontSize: 16 },
   }[size];
 
+  const handlePress = () => {
+    if (disabled || loading) return;
+    rpgHapticButton();
+    onPress();
+  };
+
   return (
     <TouchableOpacity
       style={[
         styles.button,
+        getShadowStyle(),
         {
           backgroundColor: getBackgroundColor(),
           borderColor: getBorderColor(),
@@ -96,9 +128,9 @@ export function RPGButton({
         },
         style,
       ]}
-      onPress={onPress}
+      onPress={handlePress}
       disabled={disabled || loading}
-      activeOpacity={0.8}
+      activeOpacity={0.75}
     >
       {loading ? (
         <ActivityIndicator size="small" color={getTextColor()} />

@@ -7,8 +7,9 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { Radius, Spacing } from '@/constants/theme';
+import { Radius, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { rpgHapticButton } from '@/utils/haptics';
 
 export interface RPGCardProps {
   children: React.ReactNode;
@@ -45,8 +46,23 @@ export function RPGCard({
     }
   };
 
+  const getShadowStyle = (): ViewStyle => {
+    switch (variant) {
+      case 'highlight':
+        return {
+          ...Shadows.glowGold,
+          shadowColor: theme.primary,
+        };
+      case 'elevated':
+        return Shadows.md;
+      default:
+        return Shadows.sm;
+    }
+  };
+
   const cardStyle: StyleProp<ViewStyle> = [
     styles.card,
+    getShadowStyle(),
     {
       backgroundColor: getBackgroundColor(),
       borderColor: getBorderColor(),
@@ -58,8 +74,11 @@ export function RPGCard({
     return (
       <TouchableOpacity
         style={cardStyle}
-        onPress={onPress}
-        activeOpacity={0.8}
+        onPress={() => {
+          rpgHapticButton();
+          onPress();
+        }}
+        activeOpacity={0.78}
       >
         {children}
       </TouchableOpacity>
