@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { AuthProvider } from '@/context/auth-context';
+import { CharacterProvider } from '@/context/character-context';
 import { ThemeProvider, useTheme } from '@/context/theme-context';
 
 function RootNavigator() {
@@ -60,7 +61,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <RootNavigator />
+        <CharacterProvider>
+          <RootNavigator />
+        </CharacterProvider>
       </AuthProvider>
     </ThemeProvider>
   );

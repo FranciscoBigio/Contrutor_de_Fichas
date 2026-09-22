@@ -15,6 +15,7 @@ import {
 } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
+import { useCharacters } from '@/context/character-context';
 import { useTheme } from '@/context/theme-context';
 
 const PLANNED_SCREENS = [
@@ -22,7 +23,7 @@ const PLANNED_SCREENS = [
   { id: '1', title: '1. Login do Aventureiro (PRONTA)', desc: 'Acesso seguro com validações e token JWT via SecureStore', icon: '🔐', ready: true, route: '/auth/login' },
   { id: '2', title: '2. Cadastro de Conta (PRONTA)', desc: 'Registro com perfil de Mestre ou Jogador e persistência no SecureStore', icon: '📝', ready: true, route: '/auth/register' },
   { id: '3', title: '3. Recuperação de Senha (PRONTA)', desc: 'Redefinição de acesso com envio simulado de código e timer de reenvio', icon: '🔑', ready: true, route: '/auth/forgot-password' },
-  // Módulo 2: Gerenciamento & Ficha do RPG
+  // Módulo 2: Gerenciamento & Ficha do RPG (Iniciado no Commit 07!)
   { id: '4', title: '4. Meus Personagens (HUB)', desc: 'Dashboard com lista de heróis, status, busca e filtros', icon: '🛡️', ready: false },
   { id: '5', title: '5. Criação de Herói', desc: 'Formulário em etapas (raça, classe, atributos e avatar)', icon: '✨', ready: false },
   { id: '6', title: '6. Ficha Geral (Combate & Atributos)', desc: 'HP dinâmico, CA, Iniciativa e grid dos 6 atributos principais', icon: '⚔️', ready: false },
@@ -37,6 +38,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { theme, isDark, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
+  const { characters, activeCharacter, setActiveCharacterId, resetToMock, loading: charsLoading } = useCharacters();
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -65,12 +67,12 @@ export default function HomeScreen() {
 
         {/* Hero Card do Projeto */}
         <RPGCard variant="highlight" style={styles.heroCard}>
-          <RPGBadge label="COMMIT #06 • v0.6.0 • MÓDULO AUTH COMPLETO (3/11 TELAS)" variant="gold" />
+          <RPGBadge label="COMMIT #07 • v0.7.0 • MOCK DE FICHAS & ESTADO GLOBAL" variant="gold" />
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             ⚔️ QuestSheet RPG
           </Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            O módulo completo de autenticação e recuperação de credenciais foi construído com sucesso!
+            Estrutura de dados completa para D&D/T20 com 4 heróis clássicos, tipos TypeScript e persistência offline via AsyncStorage!
           </Text>
 
           {/* Card de Sessão do Usuário */}
@@ -122,9 +124,9 @@ export default function HomeScreen() {
           />
 
           <View style={styles.tagRow}>
-            <RPGBadge label="SemVer v0.6.0" variant="hp" size="sm" />
-            <RPGBadge label="OWASP M2 SecureStore" variant="mana" size="sm" />
-            <RPGBadge label="Telas 3/11 Concluídas" variant="gold" size="sm" />
+            <RPGBadge label="SemVer v0.7.0" variant="hp" size="sm" />
+            <RPGBadge label="AsyncStorage Offline" variant="mana" size="sm" />
+            <RPGBadge label={`${characters.length} Fichas Carregadas`} variant="gold" size="sm" />
           </View>
         </RPGCard>
 
@@ -194,6 +196,119 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Mock de Personagens Carregados na Camada de Estado & AsyncStorage (Commit 07) */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+              🛡️ Heróis Carregados ({characters.length} Fichas)
+            </Text>
+            <RPGBadge label="ASYNCSTORAGE OFFLINE" variant="gold" size="sm" />
+          </View>
+          <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+            Estrutura de dados D&D 5e / T20 com PV, CA, magias, perícias e inventário persistidos:
+          </Text>
+
+          {charsLoading ? (
+            <RPGCard style={{ padding: Spacing.md, alignItems: 'center' }}>
+              <Text style={{ color: theme.textSecondary }}>Carregando grimório de heróis...</Text>
+            </RPGCard>
+          ) : (
+            <View style={styles.characterGrid}>
+              {characters.map((char) => {
+                const isActive = activeCharacter?.id === char.id;
+                return (
+                  <RPGCard
+                    key={char.id}
+                    variant={isActive ? 'highlight' : 'default'}
+                    style={[
+                      styles.charCard,
+                      isActive && { borderColor: theme.primary, borderWidth: 1.5 },
+                    ]}
+                  >
+                    <View style={styles.charHeaderRow}>
+                      <Text style={styles.charEmoji}>{char.avatarEmoji}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.charName, { color: theme.text }]}>{char.name}</Text>
+                        <Text style={[styles.charSubtitle, { color: theme.textSecondary }]}>
+                          {char.race} • {char.class} Nível {char.level} {char.subclass ? `(${char.subclass})` : ''}
+                        </Text>
+                      </View>
+                      {isActive ? (
+                        <RPGBadge label="ATIVO 👑" variant="gold" size="sm" />
+                      ) : null}
+                    </View>
+
+                    {/* Chips de Combate */}
+                    <View style={styles.charStatsRow}>
+                      <View style={[styles.statBadge, { backgroundColor: `${theme.hp}15`, borderColor: theme.hp }]}>
+                        <Text style={[styles.statLabel, { color: theme.hp }]}>PV</Text>
+                        <Text style={[styles.statValue, { color: theme.text }]}>
+                          {char.currentHp}/{char.maxHp}
+                        </Text>
+                      </View>
+                      <View style={[styles.statBadge, { backgroundColor: `${theme.armor}15`, borderColor: theme.armor }]}>
+                        <Text style={[styles.statLabel, { color: theme.armor }]}>CA</Text>
+                        <Text style={[styles.statValue, { color: theme.text }]}>{char.armorClass}</Text>
+                      </View>
+                      <View style={[styles.statBadge, { backgroundColor: `${theme.mana}15`, borderColor: theme.mana }]}>
+                        <Text style={[styles.statLabel, { color: theme.mana }]}>DESL</Text>
+                        <Text style={[styles.statValue, { color: theme.text }]}>{char.speed}m</Text>
+                      </View>
+                      <View style={[styles.statBadge, { backgroundColor: `${theme.stamina}15`, borderColor: theme.stamina }]}>
+                        <Text style={[styles.statLabel, { color: theme.stamina }]}>INIC</Text>
+                        <Text style={[styles.statValue, { color: theme.text }]}>
+                          {char.initiative >= 0 ? `+${char.initiative}` : char.initiative}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Resumo de Atributos */}
+                    <View style={[styles.attrRow, { backgroundColor: theme.backgroundInput }]}>
+                      <Text style={[styles.attrText, { color: theme.textSecondary }]}>
+                        FOR <Text style={{ color: theme.text, fontWeight: 'bold' }}>{char.attributes.strength}</Text>
+                      </Text>
+                      <Text style={[styles.attrText, { color: theme.textSecondary }]}>
+                        DES <Text style={{ color: theme.text, fontWeight: 'bold' }}>{char.attributes.dexterity}</Text>
+                      </Text>
+                      <Text style={[styles.attrText, { color: theme.textSecondary }]}>
+                        CON <Text style={{ color: theme.text, fontWeight: 'bold' }}>{char.attributes.constitution}</Text>
+                      </Text>
+                      <Text style={[styles.attrText, { color: theme.textSecondary }]}>
+                        INT <Text style={{ color: theme.text, fontWeight: 'bold' }}>{char.attributes.intelligence}</Text>
+                      </Text>
+                      <Text style={[styles.attrText, { color: theme.textSecondary }]}>
+                        SAB <Text style={{ color: theme.text, fontWeight: 'bold' }}>{char.attributes.wisdom}</Text>
+                      </Text>
+                      <Text style={[styles.attrText, { color: theme.textSecondary }]}>
+                        CAR <Text style={{ color: theme.text, fontWeight: 'bold' }}>{char.attributes.charisma}</Text>
+                      </Text>
+                    </View>
+
+                    {!isActive ? (
+                      <RPGButton
+                        title="Tornar Herói Ativo"
+                        variant="secondary"
+                        size="sm"
+                        onPress={() => setActiveCharacterId(char.id)}
+                        style={{ marginTop: Spacing.xs }}
+                      />
+                    ) : null}
+                  </RPGCard>
+                );
+              })}
+            </View>
+          )}
+
+          <RPGButton
+            title="Restaurar Fichas Padrão do Mock (Reset)"
+            variant="ghost"
+            size="sm"
+            icon="🔄"
+            onPress={resetToMock}
+            style={{ alignSelf: 'center', marginTop: Spacing.xs }}
+          />
+        </View>
+
         {/* Lista das 11 Telas Mapeadas */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
@@ -226,16 +341,16 @@ export default function HomeScreen() {
             ✅ Checklist do Repositório (Prof. Garrido)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commits 01 a 05 concluídos e sincronizados no GitHub
+            ✔ Commits 01 a 06 concluídos e sincronizados no GitHub
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commit 06 pronto: Tela 3 — Recuperação de Senha concluída (v0.6.0)
+            ✔ Commit 07 pronto: Mock estruturado, tipos TypeScript e CharacterContext (v0.7.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Módulo 1 (Autenticação) 100% completo (Login, Cadastro, Recuperação)
+            ✔ Módulo 2 iniciado com persistência offline-first via AsyncStorage
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Próximo: Mock Estruturado dos Personagens (Commit 07 - v0.7.0)
+            ✔ Próximo: Tela 4 — Hub Meus Personagens com busca e filtros (Commit 08 - v0.8.0)
           </Text>
         </RPGCard>
       </ScrollView>
@@ -389,5 +504,67 @@ const styles = StyleSheet.create({
   checkItem: {
     fontSize: 12,
     lineHeight: 18,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    marginTop: -4,
+    marginBottom: 2,
+  },
+  characterGrid: {
+    gap: 10,
+  },
+  charCard: {
+    padding: 12,
+    gap: 8,
+  },
+  charHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  charEmoji: {
+    fontSize: 28,
+  },
+  charName: {
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  charSubtitle: {
+    fontSize: 12,
+  },
+  charStatsRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  statBadge: {
+    flex: 1,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  statValue: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  attrRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: Radius.sm,
+  },
+  attrText: {
+    fontSize: 11,
   },
 });
