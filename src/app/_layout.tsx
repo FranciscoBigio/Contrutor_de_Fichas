@@ -51,6 +51,13 @@ function RootNavigator() {
             headerBackTitle: 'Voltar',
           }}
         />
+        <Stack.Screen
+          name="characters/index"
+          options={{
+            title: '🛡️ Meus Personagens',
+            headerBackTitle: 'Início',
+          }}
+        />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </>

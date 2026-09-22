@@ -24,7 +24,7 @@ const PLANNED_SCREENS = [
   { id: '2', title: '2. Cadastro de Conta (PRONTA)', desc: 'Registro com perfil de Mestre ou Jogador e persistência no SecureStore', icon: '📝', ready: true, route: '/auth/register' },
   { id: '3', title: '3. Recuperação de Senha (PRONTA)', desc: 'Redefinição de acesso com envio simulado de código e timer de reenvio', icon: '🔑', ready: true, route: '/auth/forgot-password' },
   // Módulo 2: Gerenciamento & Ficha do RPG (Iniciado no Commit 07!)
-  { id: '4', title: '4. Meus Personagens (HUB)', desc: 'Dashboard com lista de heróis, status, busca e filtros', icon: '🛡️', ready: false },
+  { id: '4', title: '4. Meus Personagens (HUB) (PRONTA)', desc: 'Dashboard com lista de heróis, status, barra de vida e seleção ativa', icon: '🛡️', ready: true, route: '/characters' },
   { id: '5', title: '5. Criação de Herói', desc: 'Formulário em etapas (raça, classe, atributos e avatar)', icon: '✨', ready: false },
   { id: '6', title: '6. Ficha Geral (Combate & Atributos)', desc: 'HP dinâmico, CA, Iniciativa e grid dos 6 atributos principais', icon: '⚔️', ready: false },
   { id: '7', title: '7. Perícias & Salvaguardas', desc: '18 perícias clássicas com cálculo de bônus e proficiência', icon: '🎯', ready: false },
@@ -67,12 +67,12 @@ export default function HomeScreen() {
 
         {/* Hero Card do Projeto */}
         <RPGCard variant="highlight" style={styles.heroCard}>
-          <RPGBadge label="COMMIT #07 • v0.7.0 • MOCK DE FICHAS & ESTADO GLOBAL" variant="gold" />
+          <RPGBadge label="COMMIT #08 • v0.8.0 • HUB 1 DE PERSONAGENS (4/11 TELAS)" variant="gold" />
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             ⚔️ QuestSheet RPG
           </Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            Estrutura de dados completa para D&D/T20 com 4 heróis clássicos, tipos TypeScript e persistência offline via AsyncStorage!
+            A Tela 4 (Meus Personagens) foi construída com listagem completa, barras de vida gráficas e gerenciador de heróis!
           </Text>
 
           {/* Card de Sessão do Usuário */}
@@ -124,24 +124,31 @@ export default function HomeScreen() {
           />
 
           <View style={styles.tagRow}>
-            <RPGBadge label="SemVer v0.7.0" variant="hp" size="sm" />
+            <RPGBadge label="SemVer v0.8.0" variant="hp" size="sm" />
             <RPGBadge label="AsyncStorage Offline" variant="mana" size="sm" />
-            <RPGBadge label={`${characters.length} Fichas Carregadas`} variant="gold" size="sm" />
+            <RPGBadge label="Telas 4/11 Concluídas" variant="gold" size="sm" />
           </View>
         </RPGCard>
 
-        {/* Atalhos Rápidos para as 3 Telas do Módulo de Autenticação */}
+        {/* Atalhos Rápidos para as 4 Telas Concluídas */}
         <RPGCard style={styles.actionCard}>
           <Text style={[styles.actionTitle, { color: theme.text }]}>
-            🔐 Módulo de Autenticação (3 Telas Prontas)
+            🚀 Atalhos para as Telas Prontas (4 de 11)
           </Text>
           <Text style={[styles.actionDesc, { color: theme.textSecondary }]}>
-            Navegue livremente pelo fluxo completo de autenticação e recuperação de credenciais:
+            Navegue pelas telas já construídas com base no padrão Stack e Context API:
           </Text>
+          <RPGButton
+            title="🛡️ Abrir Tela 4: Meus Personagens (HUB 1)"
+            variant="primary"
+            icon="✨"
+            onPress={() => router.push('/characters' as any)}
+            style={{ width: '100%' }}
+          />
           <View style={styles.actionBtnRow}>
             <RPGButton
               title="1. Login"
-              variant="primary"
+              variant="secondary"
               icon="🔐"
               size="sm"
               onPress={() => router.push('/auth/login' as any)}
@@ -341,16 +348,16 @@ export default function HomeScreen() {
             ✅ Checklist do Repositório (Prof. Garrido)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commits 01 a 06 concluídos e sincronizados no GitHub
+            ✔ Commits 01 a 07 concluídos e sincronizados no GitHub
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commit 07 pronto: Mock estruturado, tipos TypeScript e CharacterContext (v0.7.0)
+            ✔ Commit 08 pronto: Tela 4 — Meus Personagens (HUB 1) criada com barra de vida (v0.8.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Módulo 2 iniciado com persistência offline-first via AsyncStorage
+            ✔ 4 de 11 telas concluídas e navegáveis com navegação Stack
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Próximo: Tela 4 — Hub Meus Personagens com busca e filtros (Commit 08 - v0.8.0)
+            ✔ Próximo: Busca em tempo real e filtros de classe na listagem (Commit 09 - v0.9.0)
           </Text>
         </RPGCard>
       </ScrollView>

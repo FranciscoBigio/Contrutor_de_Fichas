@@ -326,3 +326,4 @@ export const useCharacters = (): CharacterContextData => {
   }
   return context;
 };
+
