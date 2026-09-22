@@ -3,9 +3,13 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 
 import { MOCK_CHARACTERS } from '@/data/mock-characters';
 import {
+  Attributes,
+  calculateModifier,
   Character,
   CombatCondition,
   InventoryItem,
+  Spell,
+  SpellcastingData,
 } from '@/types/character';
 
 const CHARACTERS_STORAGE_KEY = '@questsheet_characters_v1';
@@ -31,8 +35,14 @@ interface CharacterContextData {
   }>;
   shortRest: (id: string) => Promise<void>;
   longRest: (id: string) => Promise<void>;
+  consumeSpellSlot: (id: string, slotLevel: number) => Promise<void>;
   useSpellSlot: (id: string, slotLevel: number) => Promise<void>;
   restoreSpellSlot: (id: string, slotLevel: number) => Promise<void>;
+  restoreAllSpellSlots: (charId: string) => Promise<void>;
+  togglePrepareSpell: (charId: string, spellId: string) => Promise<void>;
+  addSpell: (charId: string, spell: Omit<Spell, 'id'>) => Promise<void>;
+  deleteSpell: (charId: string, spellId: string) => Promise<void>;
+  initializeSpellcasting: (charId: string, ability: keyof Attributes) => Promise<void>;
   toggleEquipItem: (charId: string, itemId: string) => Promise<void>;
   addItem: (charId: string, item: Omit<InventoryItem, 'id'>) => Promise<void>;
   removeItem: (charId: string, itemId: string) => Promise<void>;
@@ -278,7 +288,7 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   // Gerenciamento de Magias
-  const useSpellSlot = async (id: string, slotLevel: number) => {
+  const consumeSpellSlot = async (id: string, slotLevel: number) => {
     const target = characters.find((c) => c.id === id);
     if (!target || !target.spellcasting) return;
 
@@ -314,6 +324,119 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         slots: newSlots,
       },
     });
+  };
+
+  const restoreAllSpellSlots = async (charId: string) => {
+    const target = characters.find((c) => c.id === charId);
+    if (!target || !target.spellcasting) return;
+
+    const restoredSlots = target.spellcasting.slots.map((s) => ({ ...s, used: 0 }));
+
+    await updateCharacter(charId, {
+      spellcasting: {
+        ...target.spellcasting,
+        slots: restoredSlots,
+      },
+    });
+  };
+
+  const togglePrepareSpell = async (charId: string, spellId: string) => {
+    const target = characters.find((c) => c.id === charId);
+    if (!target || !target.spellcasting) return;
+
+    const updatedSpells = target.spellcasting.spells.map((s) => {
+      if (s.id === spellId) {
+        return { ...s, prepared: !s.prepared };
+      }
+      return s;
+    });
+
+    await updateCharacter(charId, {
+      spellcasting: {
+        ...target.spellcasting,
+        spells: updatedSpells,
+      },
+    });
+  };
+
+  const addSpell = async (charId: string, spell: Omit<Spell, 'id'>) => {
+    const target = characters.find((c) => c.id === charId);
+    if (!target || !target.spellcasting) return;
+
+    const newSpell: Spell = {
+      ...spell,
+      id: `sp-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+    };
+
+    await updateCharacter(charId, {
+      spellcasting: {
+        ...target.spellcasting,
+        spells: [...target.spellcasting.spells, newSpell],
+      },
+    });
+  };
+
+  const deleteSpell = async (charId: string, spellId: string) => {
+    const target = characters.find((c) => c.id === charId);
+    if (!target || !target.spellcasting) return;
+
+    const updatedSpells = target.spellcasting.spells.filter((s) => s.id !== spellId);
+
+    await updateCharacter(charId, {
+      spellcasting: {
+        ...target.spellcasting,
+        spells: updatedSpells,
+      },
+    });
+  };
+
+  const initializeSpellcasting = async (charId: string, ability: keyof Attributes) => {
+    const target = characters.find((c) => c.id === charId);
+    if (!target) return;
+
+    const attrScore = target.attributes[ability] || 10;
+    const mod = calculateModifier(attrScore);
+    const profBonus = target.proficiencyBonus || 2;
+
+    const defaultSpellcasting: SpellcastingData = {
+      ability,
+      saveDc: 8 + profBonus + mod,
+      attackBonus: profBonus + mod,
+      slots: [
+        { level: 1, total: 2, used: 0 },
+        { level: 2, total: 0, used: 0 },
+        { level: 3, total: 0, used: 0 },
+      ],
+      spells: [
+        {
+          id: 'sp-default-1',
+          name: 'Luz',
+          level: 0,
+          school: 'Evocação',
+          castingTime: '1 Ação',
+          range: 'Toque',
+          components: 'V, M (Vagalume)',
+          duration: '1 Hora',
+          description: 'Faz um objeto tocado emitir luz brilhante num raio de 6 metros.',
+          prepared: true,
+        },
+        {
+          id: 'sp-default-2',
+          name: 'Toque Chocante',
+          level: 0,
+          school: 'Evocação',
+          castingTime: '1 Ação',
+          range: 'Toque',
+          components: 'V, S',
+          duration: 'Instantânea',
+          description: 'Ataque mágico que causa 1d8 de dano elétrico e impede o alvo de usar reações.',
+          damageOrEffect: '1d8 Elétrico',
+          prepared: true,
+        },
+      ],
+    };
+
+    await updateCharacter(charId, { spellcasting: defaultSpellcasting });
   };
 
   // Gerenciamento de Inventário
@@ -378,8 +501,14 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         rollDeathSave,
         shortRest,
         longRest,
-        useSpellSlot,
+        consumeSpellSlot,
+        useSpellSlot: consumeSpellSlot,
         restoreSpellSlot,
+        restoreAllSpellSlots,
+        togglePrepareSpell,
+        addSpell,
+        deleteSpell,
+        initializeSpellcasting,
         toggleEquipItem,
         addItem,
         removeItem,

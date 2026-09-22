@@ -79,6 +79,13 @@ function RootNavigator() {
             headerBackTitle: 'Combate',
           }}
         />
+        <Stack.Screen
+          name="character/[id]/spells"
+          options={{
+            title: '🔮 Grimório & Magias',
+            headerBackTitle: 'Ficha',
+          }}
+        />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </>
