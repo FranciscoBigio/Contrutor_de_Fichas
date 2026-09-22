@@ -67,12 +67,12 @@ export default function HomeScreen() {
 
         {/* Hero Card do Projeto */}
         <RPGCard variant="highlight" style={styles.heroCard}>
-          <RPGBadge label="COMMIT #12 • v0.12.0 • FICHA GERAL & COMBATE (6/11 TELAS)" variant="gold" />
+          <RPGBadge label="COMMIT #13 • v0.13.0 • COMBATE INTERATIVO & CONDIÇÕES" variant="gold" />
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             ⚔️ QuestSheet RPG
           </Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            A Tela 6 (Ficha Geral de Combate - HUB 2) foi finalizada com controles de PV, barra dinâmica de dano/cura, dados de vida e descanso!
+            A Ficha Geral (HUB 2) agora conta com calculadora de dano/cura com resistências, 15 condições D&D 5e e inspiração heroica!
           </Text>
 
           {/* Card de Sessão do Usuário */}
@@ -124,8 +124,8 @@ export default function HomeScreen() {
           />
 
           <View style={styles.tagRow}>
-            <RPGBadge label="SemVer v0.12.0" variant="hp" size="sm" />
-            <RPGBadge label="Combate & PV Pronto" variant="mana" size="sm" />
+            <RPGBadge label="SemVer v0.13.0" variant="hp" size="sm" />
+            <RPGBadge label="Combate & Condições" variant="mana" size="sm" />
             <RPGBadge label="Telas 6/11 Concluídas" variant="gold" size="sm" />
           </View>
         </RPGCard>
@@ -374,16 +374,16 @@ export default function HomeScreen() {
             ✅ Checklist do Repositório (Prof. Garrido)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commits 01 a 11 concluídos e sincronizados no GitHub
+            ✔ Commits 01 a 12 concluídos e sincronizados no GitHub
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commit 12 pronto: Tela 6 — Ficha Geral de Combate (HUB 2) com controles de PV, dados de vida e descanso (v0.12.0)
+            ✔ Commit 13 pronto: Combate Interativo — calculadora de dano/cura com resistências, 15 condições D&D 5e e inspiração (v0.13.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
             ✔ 6 de 11 telas concluídas e navegáveis com estado local + global
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Próximo: Controles Interativos de Dano/Cura e Descansos (Commit 13 - v0.13.0)
+            ✔ Próximo: Tela 7 — Perícias & Salvaguardas com cálculo de bônus D&D 5e (Commit 14 - v0.14.0)
           </Text>
         </RPGCard>
       </ScrollView>

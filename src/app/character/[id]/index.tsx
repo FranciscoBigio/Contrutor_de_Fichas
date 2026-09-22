@@ -2,11 +2,13 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
+  Modal,
   Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 
@@ -22,6 +24,8 @@ import { useTheme } from '@/context/theme-context';
 import {
   Attributes,
   calculateModifier,
+  CombatCondition,
+  DamageType,
   formatModifier,
 } from '@/types/character';
 
@@ -34,6 +38,38 @@ const ATTRIBUTE_LIST: { key: keyof Attributes; short: string; full: string }[] =
   { key: 'charisma', short: 'CAR', full: 'Carisma' },
 ];
 
+const ALL_CONDITIONS: { name: CombatCondition; icon: string; desc: string }[] = [
+  { name: 'Cego', icon: '👁️', desc: 'Falha em testes visuais. Ataques contra têm vantagem, seus ataques têm desvantagem.' },
+  { name: 'Enfeitiçado', icon: '💖', desc: 'Não pode ferir o encantador. Ele tem vantagem social.' },
+  { name: 'Surdo', icon: '👂', desc: 'Falha em testes de audição.' },
+  { name: 'Amedrontado', icon: '😨', desc: 'Desvantagem em testes e ataques com a fonte visível.' },
+  { name: 'Agarrado', icon: '🤼', desc: 'Deslocamento reduzido a 0m.' },
+  { name: 'Incapacitado', icon: '😵', desc: 'Não pode realizar ações nem reações.' },
+  { name: 'Invisível', icon: '👻', desc: 'Invisível sem magia. Ataques próprios têm vantagem, contra têm desvantagem.' },
+  { name: 'Paralisado', icon: '⚡', desc: 'Incapacitado, imóvel. Falha automática em testes de FOR e DES.' },
+  { name: 'Petrificado', icon: '🗿', desc: 'Transformado em pedra. Peso x10 e resistência a todos os danos.' },
+  { name: 'Envenenado', icon: '🧪', desc: 'Desvantagem em jogadas de ataque e testes de habilidade.' },
+  { name: 'Caído', icon: '🥋', desc: 'Rasteja. Seus ataques têm desvantagem; ataques corpo a corpo têm vantagem.' },
+  { name: 'Restringido', icon: '🕸️', desc: 'Deslocamento 0. Seus ataques têm desvantagem, contra têm vantagem.' },
+  { name: 'Atordoado', icon: '💫', desc: 'Incapacitado, fala hesitante. Falha automática em FOR e DES.' },
+  { name: 'Inconsciente', icon: '💤', desc: 'Incapacitado e caído. Ataques a 1.5m são acertos críticos automáticos.' },
+  { name: 'Exaustão', icon: '🥵', desc: 'Penalidades cumulativas de fadiga extrema.' },
+];
+
+const DAMAGE_TYPES: { type: DamageType; icon: string }[] = [
+  { type: 'Físico', icon: '🗡️' },
+  { type: 'Fogo', icon: '🔥' },
+  { type: 'Gelo', icon: '❄️' },
+  { type: 'Elétrico', icon: '⚡' },
+  { type: 'Ácido', icon: '🧪' },
+  { type: 'Veneno', icon: '☠️' },
+  { type: 'Radiante', icon: '✨' },
+  { type: 'Necrótico', icon: '💀' },
+  { type: 'Psíquico', icon: '🧠' },
+  { type: 'Trovejante', icon: '📢' },
+  { type: 'Força', icon: '🌌' },
+];
+
 export default function CharacterGeneralSheetScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -44,6 +80,9 @@ export default function CharacterGeneralSheetScreen() {
     setActiveCharacterId,
     modifyHp,
     modifyTempHp,
+    toggleCondition,
+    toggleInspiration,
+    rollDeathSave,
     shortRest,
     longRest,
     updateCharacter,
@@ -51,8 +90,20 @@ export default function CharacterGeneralSheetScreen() {
 
   const character = (id ? getCharacterById(id) : null) || activeCharacter;
 
-  // Feedback local de ação executada (Aula 3, Slide 12 - Estado Local)
-  const [combatLog, setCombatLog] = useState<string>('');
+  // Estado Local de Combate (Aula 3, Slide 12 - Estados Locais)
+  const [combatHistory, setCombatHistory] = useState<string[]>([
+    '⚔️ Sessão de combate iniciada na Masmorra.',
+  ]);
+
+  // Modais de Combate Interativo (Commit 13)
+  const [isDamageModalVisible, setIsDamageModalVisible] = useState<boolean>(false);
+  const [isConditionsModalVisible, setIsConditionsModalVisible] = useState<boolean>(false);
+
+  // Calculadora de Dano & Cura
+  const [calcMode, setCalcMode] = useState<'damage' | 'heal' | 'temp'>('damage');
+  const [customAmount, setCustomAmount] = useState<string>('');
+  const [damageMultiplier, setDamageMultiplier] = useState<number>(1);
+  const [selectedDamageType, setSelectedDamageType] = useState<DamageType>('Físico');
 
   if (!character) {
     return (
@@ -77,37 +128,88 @@ export default function CharacterGeneralSheetScreen() {
   }
 
   const isActive = activeCharacter?.id === character.id;
+  const activeConditions = character.conditions || [];
 
-  const handleApplyDamage = async (amount: number) => {
+  const addCombatLog = (entry: string) => {
+    setCombatHistory((prev) => [entry, ...prev.slice(0, 4)]);
+  };
+
+  const handleQuickDamage = async (amount: number) => {
     await modifyHp(character.id, -amount);
-    setCombatLog(`⚔️ ${character.name} sofreu ${amount} de dano!`);
+    addCombatLog(`⚔️ ${character.name} sofreu ${amount} de dano!`);
   };
 
-  const handleApplyHeal = async (amount: number) => {
+  const handleQuickHeal = async (amount: number) => {
     await modifyHp(character.id, amount);
-    setCombatLog(`✨ ${character.name} recuperou ${amount} PV!`);
-  };
-
-  const handleAddTempHp = async (amount: number) => {
-    await modifyTempHp(character.id, (character.tempHp || 0) + amount);
-    setCombatLog(`🛡️ +${amount} PV Temporário adicionado!`);
+    addCombatLog(`✨ ${character.name} recuperou ${amount} PV!`);
   };
 
   const handleClearTempHp = async () => {
     await modifyTempHp(character.id, 0);
-    setCombatLog('🛡️ PV Temporário zerado.');
+    addCombatLog('🛡️ PV Temporário zerado.');
+  };
+
+  const handleApplyCalculator = async () => {
+    const val = parseInt(customAmount, 10);
+    if (isNaN(val) || val <= 0) {
+      Alert.alert('Valor Inválido', 'Digite uma quantidade numérica maior que zero.');
+      return;
+    }
+
+    if (calcMode === 'damage') {
+      const finalDmg = Math.max(1, Math.round(val * damageMultiplier));
+      await modifyHp(character.id, -finalDmg);
+      const multiText =
+        damageMultiplier === 0.5
+          ? ' (Resistência: ½)'
+          : damageMultiplier === 2
+          ? ' (Vulnerabilidade: 2x)'
+          : '';
+      addCombatLog(`💥 Dano de ${selectedDamageType}: ${finalDmg} PV${multiText}!`);
+    } else if (calcMode === 'heal') {
+      await modifyHp(character.id, val);
+      addCombatLog(`✨ Cura aplicada: +${val} PV recuperados!`);
+    } else {
+      await modifyTempHp(character.id, (character.tempHp || 0) + val);
+      addCombatLog(`🛡️ Escudo Adicional: +${val} PV Temporário!`);
+    }
+
+    setCustomAmount('');
+    setIsDamageModalVisible(false);
+  };
+
+  const handleRollInitiative = () => {
+    const d20 = Math.floor(Math.random() * 20) + 1;
+    const total = d20 + character.initiative;
+    addCombatLog(`⚡ Iniciativa: Rolou d20(${d20}) + ${formatModifier(character.initiative)} = ${total}!`);
+    Alert.alert('⚡ Rolagem de Iniciativa', `Resultado do d20: ${d20}\nModificador de DES: ${formatModifier(character.initiative)}\nTotal de Combate: ${total}!`);
+  };
+
+  const handleRollDeathSave = async () => {
+    const res = await rollDeathSave(character.id);
+    addCombatLog(res.message);
+    Alert.alert('💀 Salvaguarda contra a Morte', res.message);
+  };
+
+  const handleToggleInspiration = async () => {
+    await toggleInspiration(character.id);
+    addCombatLog(
+      character.hasInspiration
+        ? '👑 Inspiração Heroica foi gasta pelo herói!'
+        : '🌟 Inspiração Heroica concedida pelo Mestre!'
+    );
   };
 
   const handleShortRest = async () => {
     await shortRest(character.id);
-    Alert.alert('☕ Descanso Curto Concluído', `${character.name} recuperou parte de seus pontos de vida e fôlego de batalha!`);
-    setCombatLog('☕ Descanso Curto realizado com sucesso.');
+    addCombatLog('☕ Descanso Curto concluído (PVs recuperados com dado de vida).');
+    Alert.alert('☕ Descanso Curto', `${character.name} recuperou fôlego e pontos de vida!`);
   };
 
   const handleLongRest = async () => {
     await longRest(character.id);
-    Alert.alert('⛺ Descanso Longo Concluído', `${character.name} teve seus PVs restaurados ao máximo, dados de vida e espaços de magia renovados!`);
-    setCombatLog('⛺ Descanso Longo realizado (PV total e magias restauradas).');
+    addCombatLog('⛺ Descanso Longo concluído (100% PV, slots de magia e dados restaurados).');
+    Alert.alert('⛺ Descanso Longo', `${character.name} descansou completamente. PV ao máximo e magias recarregadas!`);
   };
 
   const toggleDeathSave = async (type: 'successes' | 'failures', index: number) => {
@@ -126,7 +228,7 @@ export default function CharacterGeneralSheetScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         {/* Cabeçalho do Herói (HUB 2) */}
         <View style={styles.header}>
-          <RPGBadge label="TELA 6 DE 11 • HUB 2 - FICHA GERAL & COMBATE" variant="gold" size="sm" />
+          <RPGBadge label="TELA 6 DE 11 • HUB 2 - FICHA GERAL & COMBATE INTERATIVO" variant="gold" size="sm" />
           <View style={styles.heroIdentityRow}>
             <View
               style={[
@@ -166,16 +268,59 @@ export default function CharacterGeneralSheetScreen() {
               </Text>
             </View>
           </View>
+
+          {/* Botão Interativo de Inspiração Heroica (D&D 5e) */}
+          <Pressable
+            onPress={handleToggleInspiration}
+            style={[
+              styles.inspirationButton,
+              {
+                backgroundColor: character.hasInspiration ? '#D4AF37' : theme.backgroundCard,
+                borderColor: '#D4AF37',
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.inspirationText,
+                { color: character.hasInspiration ? '#1A140B' : '#D4AF37' },
+              ]}
+            >
+              {character.hasInspiration
+                ? '🌟 INSPIRAÇÃO HEROICA: ATIVA (Toque para usar)'
+                : '✨ Inspiração Heroica: Inativa (Toque para conceder)'}
+            </Text>
+          </Pressable>
         </View>
 
-        {/* Log de Combate Instantâneo */}
-        {combatLog ? (
-          <View style={[styles.logBanner, { backgroundColor: theme.backgroundInput, borderColor: theme.border }]}>
-            <Text style={[styles.logText, { color: theme.text }]}>{combatLog}</Text>
+        {/* Condições de Combate Ativas */}
+        {activeConditions.length > 0 ? (
+          <View style={[styles.conditionsBanner, { backgroundColor: `${theme.hp}15`, borderColor: theme.hp }]}>
+            <View style={styles.conditionsBannerHeader}>
+              <Text style={[styles.conditionsBannerTitle, { color: theme.hp }]}>
+                🩸 Condições de Combate Ativas ({activeConditions.length}):
+              </Text>
+              <Pressable onPress={() => setIsConditionsModalVisible(true)}>
+                <Text style={[styles.conditionsManageLink, { color: theme.primary }]}>Editar ⚙️</Text>
+              </Pressable>
+            </View>
+            <View style={styles.conditionTagsRow}>
+              {activeConditions.map((cond) => (
+                <Pressable
+                  key={cond}
+                  onPress={() => toggleCondition(character.id, cond)}
+                  style={[styles.activeConditionChip, { backgroundColor: theme.backgroundCard, borderColor: theme.hp }]}
+                >
+                  <Text style={[styles.activeConditionText, { color: theme.text }]}>
+                    {cond} ✕
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
         ) : null}
 
-        {/* Card 1: Painel Dinâmico de Pontos de Vida (PV) */}
+        {/* Card 1: Painel Dinâmico de Pontos de Vida (PV) & Calculadora Interativa */}
         <RPGCard variant="highlight" style={styles.card}>
           <View style={styles.cardHeaderRow}>
             <Text style={[styles.cardTitle, { color: theme.text }]}>
@@ -194,72 +339,85 @@ export default function CharacterGeneralSheetScreen() {
             current={character.currentHp}
             max={character.maxHp}
             temp={character.tempHp}
-            height={14}
+            height={16}
             style={{ marginVertical: Spacing.xs }}
           />
 
           {/* Botões Rápidos de Dano e Cura */}
           <View style={styles.hpActionsSection}>
             <View style={styles.hpActionColumn}>
-              <Text style={[styles.actionColTitle, { color: theme.hp }]}>Dano Sofrido</Text>
+              <Text style={[styles.actionColTitle, { color: theme.hp }]}>Dano Rápido</Text>
               <View style={styles.hpButtonRow}>
                 <RPGButton
                   title="-1"
                   variant="danger"
                   size="sm"
-                  onPress={() => handleApplyDamage(1)}
+                  onPress={() => handleQuickDamage(1)}
                   style={{ flex: 1 }}
                 />
                 <RPGButton
                   title="-5"
                   variant="danger"
                   size="sm"
-                  onPress={() => handleApplyDamage(5)}
+                  onPress={() => handleQuickDamage(5)}
                   style={{ flex: 1 }}
                 />
                 <RPGButton
                   title="-10"
                   variant="danger"
                   size="sm"
-                  onPress={() => handleApplyDamage(10)}
+                  onPress={() => handleQuickDamage(10)}
                   style={{ flex: 1 }}
                 />
               </View>
             </View>
 
             <View style={styles.hpActionColumn}>
-              <Text style={[styles.actionColTitle, { color: theme.healing }]}>Cura Recebida</Text>
+              <Text style={[styles.actionColTitle, { color: theme.healing }]}>Cura Rápida</Text>
               <View style={styles.hpButtonRow}>
                 <RPGButton
                   title="+1"
                   variant="secondary"
                   size="sm"
-                  onPress={() => handleApplyHeal(1)}
+                  onPress={() => handleQuickHeal(1)}
                   style={{ flex: 1 }}
                 />
                 <RPGButton
                   title="+5"
                   variant="secondary"
                   size="sm"
-                  onPress={() => handleApplyHeal(5)}
+                  onPress={() => handleQuickHeal(5)}
                   style={{ flex: 1 }}
                 />
                 <RPGButton
                   title="+10"
                   variant="secondary"
                   size="sm"
-                  onPress={() => handleApplyHeal(10)}
+                  onPress={() => handleQuickHeal(10)}
                   style={{ flex: 1 }}
                 />
               </View>
             </View>
           </View>
 
+          {/* Botão da Calculadora Completa */}
+          <RPGButton
+            title="💥 Calculadora de Dano & Cura Personalizada"
+            variant="primary"
+            icon="🧮"
+            size="sm"
+            onPress={() => {
+              setCustomAmount('');
+              setIsDamageModalVisible(true);
+            }}
+            style={{ marginTop: Spacing.xs }}
+          />
+
           {/* PV Temporário */}
           <View style={[styles.tempHpRow, { backgroundColor: theme.backgroundInput }]}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.tempHpLabel, { color: theme.textSecondary }]}>
-                PV Temporário Atual: <Text style={{ color: theme.mana, fontWeight: 'bold' }}>+{character.tempHp || 0}</Text>
+                PV Temporário: <Text style={{ color: theme.mana, fontWeight: 'bold' }}>+{character.tempHp || 0}</Text>
               </Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -267,7 +425,7 @@ export default function CharacterGeneralSheetScreen() {
                 title="+5 TEMP"
                 variant="ghost"
                 size="sm"
-                onPress={() => handleAddTempHp(5)}
+                onPress={() => modifyTempHp(character.id, (character.tempHp || 0) + 5)}
               />
               {character.tempHp > 0 ? (
                 <RPGButton
@@ -280,11 +438,20 @@ export default function CharacterGeneralSheetScreen() {
             </View>
           </View>
 
-          {/* Testes contra a Morte (Death Saves) */}
+          {/* Testes contra a Morte (Death Saves com Auto-Rolagem) */}
           <View style={styles.deathSavesContainer}>
-            <Text style={[styles.deathSavesTitle, { color: theme.text }]}>
-              💀 Salvaguardas contra a Morte (0 PV)
-            </Text>
+            <View style={styles.deathSavesHeader}>
+              <Text style={[styles.deathSavesTitle, { color: theme.text }]}>
+                💀 Salvaguardas contra a Morte (0 PV)
+              </Text>
+              <RPGButton
+                title="Rolar d20 🎲"
+                variant="danger"
+                size="sm"
+                onPress={handleRollDeathSave}
+              />
+            </View>
+
             <View style={styles.deathSavesRow}>
               {/* Sucessos */}
               <View style={styles.saveCol}>
@@ -335,11 +502,19 @@ export default function CharacterGeneralSheetScreen() {
           </View>
         </RPGCard>
 
-        {/* Card 2: Estatísticas Vitais de Combate */}
+        {/* Card 2: Estatísticas Vitais de Combate & Condições */}
         <RPGCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: theme.text }]}>
-            ⚔️ Parâmetros de Combate
-          </Text>
+          <View style={styles.cardHeaderRow}>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>
+              ⚔️ Parâmetros de Combate
+            </Text>
+            <RPGButton
+              title="Condições (15) 🩸"
+              variant="secondary"
+              size="sm"
+              onPress={() => setIsConditionsModalVisible(true)}
+            />
+          </View>
 
           <View style={styles.combatStatsGrid}>
             <View style={[styles.combatStatCard, { backgroundColor: `${theme.armor}15`, borderColor: theme.armor }]}>
@@ -348,13 +523,18 @@ export default function CharacterGeneralSheetScreen() {
               <Text style={[styles.combatStatSub, { color: theme.textSecondary }]}>CA Base</Text>
             </View>
 
-            <View style={[styles.combatStatCard, { backgroundColor: `${theme.stamina}15`, borderColor: theme.stamina }]}>
+            <Pressable
+              onPress={handleRollInitiative}
+              style={[styles.combatStatCard, { backgroundColor: `${theme.stamina}15`, borderColor: theme.stamina }]}
+            >
               <Text style={[styles.combatStatLabel, { color: theme.stamina }]}>⚡ INICIATIVA</Text>
               <Text style={[styles.combatStatVal, { color: theme.text }]}>
                 {formatModifier(character.initiative)}
               </Text>
-              <Text style={[styles.combatStatSub, { color: theme.textSecondary }]}>Mod DES</Text>
-            </View>
+              <Text style={[styles.combatStatSub, { color: theme.stamina, fontWeight: 'bold' }]}>
+                Toque p/ Rolar 🎲
+              </Text>
+            </Pressable>
 
             <View style={[styles.combatStatCard, { backgroundColor: `${theme.mana}15`, borderColor: theme.mana }]}>
               <Text style={[styles.combatStatLabel, { color: theme.mana }]}>🏃 DESLOCAMENTO</Text>
@@ -392,7 +572,32 @@ export default function CharacterGeneralSheetScreen() {
           </View>
         </RPGCard>
 
-        {/* Card 3: Grade dos 6 Atributos & Modificadores */}
+        {/* Card 3: Histórico de Eventos da Rodada de Combate */}
+        <RPGCard style={styles.card}>
+          <Text style={[styles.cardTitle, { color: theme.text }]}>
+            📜 Histórico da Rodada de Combate
+          </Text>
+          <View style={styles.historyList}>
+            {combatHistory.map((entry, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.historyItem,
+                  {
+                    backgroundColor: theme.backgroundInput,
+                    borderLeftColor: index === 0 ? theme.primary : theme.border,
+                  },
+                ]}
+              >
+                <Text style={[styles.historyText, { color: index === 0 ? theme.text : theme.textSecondary }]}>
+                  {entry}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </RPGCard>
+
+        {/* Card 4: Grade dos 6 Atributos & Modificadores */}
         <RPGCard style={styles.card}>
           <View style={styles.cardHeaderRow}>
             <Text style={[styles.cardTitle, { color: theme.text }]}>
@@ -443,7 +648,7 @@ export default function CharacterGeneralSheetScreen() {
           </View>
         </RPGCard>
 
-        {/* Card 4: Atalhos para as Sub-Telas da Ficha do Herói (Telas 7 a 11) */}
+        {/* Card 5: Atalhos para as Sub-Telas da Ficha do Herói (Telas 7 a 11) */}
         <RPGCard style={styles.card}>
           <Text style={[styles.cardTitle, { color: theme.text }]}>
             🗺️ Seções Detalhadas da Ficha
@@ -501,6 +706,261 @@ export default function CharacterGeneralSheetScreen() {
           />
         </View>
       </ScrollView>
+
+      {/* Modal 1: Calculadora de Dano & Cura */}
+      <Modal
+        visible={isDamageModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsDamageModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundCard, borderColor: theme.border }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
+              💥 Calculadora de Combate
+            </Text>
+
+            {/* Modos: Dano / Cura / Temp */}
+            <View style={styles.modalModeRow}>
+              <Pressable
+                onPress={() => setCalcMode('damage')}
+                style={[
+                  styles.modeTab,
+                  {
+                    backgroundColor: calcMode === 'damage' ? theme.hp : theme.backgroundInput,
+                    borderColor: theme.hp,
+                  },
+                ]}
+              >
+                <Text style={[styles.modeTabText, { color: calcMode === 'damage' ? '#FFF' : theme.text }]}>
+                  ⚔️ Dano
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setCalcMode('heal')}
+                style={[
+                  styles.modeTab,
+                  {
+                    backgroundColor: calcMode === 'heal' ? theme.healing : theme.backgroundInput,
+                    borderColor: theme.healing,
+                  },
+                ]}
+              >
+                <Text style={[styles.modeTabText, { color: calcMode === 'heal' ? '#FFF' : theme.text }]}>
+                  ✨ Cura
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setCalcMode('temp')}
+                style={[
+                  styles.modeTab,
+                  {
+                    backgroundColor: calcMode === 'temp' ? theme.mana : theme.backgroundInput,
+                    borderColor: theme.mana,
+                  },
+                ]}
+              >
+                <Text style={[styles.modeTabText, { color: calcMode === 'temp' ? '#FFF' : theme.text }]}>
+                  🛡️ PV Temp
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Input Numérico */}
+            <View style={styles.modalInputSection}>
+              <Text style={[styles.modalInputLabel, { color: theme.textSecondary }]}>
+                Quantidade de Pontos:
+              </Text>
+              <TextInput
+                value={customAmount}
+                onChangeText={setCustomAmount}
+                placeholder="Ex: 14"
+                placeholderTextColor={theme.textSecondary}
+                keyboardType="numeric"
+                style={[
+                  styles.modalTextInput,
+                  {
+                    backgroundColor: theme.backgroundInput,
+                    color: theme.text,
+                    borderColor: theme.border,
+                  },
+                ]}
+              />
+
+              {/* Botões rápidos de valor */}
+              <View style={styles.quickValueRow}>
+                {[5, 10, 15, 20, 30].map((v) => (
+                  <Pressable
+                    key={v}
+                    onPress={() => setCustomAmount(String(v))}
+                    style={[styles.quickValueChip, { backgroundColor: theme.backgroundInput, borderColor: theme.border }]}
+                  >
+                    <Text style={[styles.quickValueText, { color: theme.text }]}>+{v}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            {/* Opções de Dano: Multiplicador & Tipo */}
+            {calcMode === 'damage' ? (
+              <View style={{ gap: Spacing.xs }}>
+                <Text style={[styles.modalInputLabel, { color: theme.textSecondary }]}>
+                  Modificador de Resistência:
+                </Text>
+                <View style={styles.multipliersRow}>
+                  <Pressable
+                    onPress={() => setDamageMultiplier(1)}
+                    style={[
+                      styles.multiplierChip,
+                      {
+                        backgroundColor: damageMultiplier === 1 ? theme.primary : theme.backgroundInput,
+                        borderColor: damageMultiplier === 1 ? theme.primary : theme.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.multiplierText, { color: damageMultiplier === 1 ? '#1A140B' : theme.text }]}>
+                      Normal (1x)
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setDamageMultiplier(0.5)}
+                    style={[
+                      styles.multiplierChip,
+                      {
+                        backgroundColor: damageMultiplier === 0.5 ? theme.primary : theme.backgroundInput,
+                        borderColor: damageMultiplier === 0.5 ? theme.primary : theme.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.multiplierText, { color: damageMultiplier === 0.5 ? '#1A140B' : theme.text }]}>
+                      Resistência (½)
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setDamageMultiplier(2)}
+                    style={[
+                      styles.multiplierChip,
+                      {
+                        backgroundColor: damageMultiplier === 2 ? theme.primary : theme.backgroundInput,
+                        borderColor: damageMultiplier === 2 ? theme.primary : theme.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.multiplierText, { color: damageMultiplier === 2 ? '#1A140B' : theme.text }]}>
+                      Vulnerável (2x)
+                    </Text>
+                  </Pressable>
+                </View>
+
+                {/* Tipo de dano */}
+                <Text style={[styles.modalInputLabel, { color: theme.textSecondary, marginTop: 4 }]}>
+                  Tipo de Dano:
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.damageTypeScroll}>
+                  {DAMAGE_TYPES.map((dt) => {
+                    const isSelected = selectedDamageType === dt.type;
+                    return (
+                      <Pressable
+                        key={dt.type}
+                        onPress={() => setSelectedDamageType(dt.type)}
+                        style={[
+                          styles.damageTypeChip,
+                          {
+                            backgroundColor: isSelected ? theme.hp : theme.backgroundInput,
+                            borderColor: isSelected ? theme.hp : theme.border,
+                          },
+                        ]}
+                      >
+                        <Text style={[styles.damageTypeText, { color: isSelected ? '#FFF' : theme.text }]}>
+                          {dt.icon} {dt.type}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            ) : null}
+
+            {/* Ações do Modal */}
+            <View style={styles.modalButtonsRow}>
+              <RPGButton
+                title="Cancelar"
+                variant="ghost"
+                onPress={() => setIsDamageModalVisible(false)}
+                style={{ flex: 1 }}
+              />
+              <RPGButton
+                title={
+                  calcMode === 'damage'
+                    ? 'Aplicar Dano 💥'
+                    : calcMode === 'heal'
+                    ? 'Aplicar Cura ✨'
+                    : 'Adicionar PV Temp 🛡️'
+                }
+                variant={calcMode === 'damage' ? 'danger' : 'primary'}
+                onPress={handleApplyCalculator}
+                style={{ flex: 1.5 }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal 2: Seletor de Condições de Combate */}
+      <Modal
+        visible={isConditionsModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsConditionsModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '80%', backgroundColor: theme.backgroundCard, borderColor: theme.border }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
+              🩸 Condições de Combate (D&D 5e)
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
+              Toque para ativar ou remover estados do aventureiro:
+            </Text>
+
+            <ScrollView style={{ marginVertical: Spacing.sm }}>
+              <View style={{ gap: Spacing.xs }}>
+                {ALL_CONDITIONS.map((cond) => {
+                  const isChecked = activeConditions.includes(cond.name);
+                  return (
+                    <Pressable
+                      key={cond.name}
+                      onPress={() => toggleCondition(character.id, cond.name)}
+                      style={[
+                        styles.conditionRowItem,
+                        {
+                          backgroundColor: isChecked ? `${theme.hp}15` : theme.backgroundInput,
+                          borderColor: isChecked ? theme.hp : theme.border,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.conditionRowIcon}>{cond.icon}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.conditionRowName, { color: isChecked ? theme.hp : theme.text }]}>
+                          {cond.name} {isChecked ? '✔' : ''}
+                        </Text>
+                        <Text style={[styles.conditionRowDesc, { color: theme.textSecondary }]}>
+                          {cond.desc}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ScrollView>
+
+            <RPGButton
+              title="Concluir e Voltar"
+              variant="primary"
+              onPress={() => setIsConditionsModalVisible(false)}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -552,15 +1012,52 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 15,
   },
-  logBanner: {
-    padding: Spacing.xs + 2,
+  inspirationButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     borderRadius: Radius.sm,
     borderWidth: 1,
     alignItems: 'center',
+    marginTop: 2,
   },
-  logText: {
+  inspirationText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    letterSpacing: 0.3,
+  },
+  conditionsBanner: {
+    padding: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    gap: 6,
+  },
+  conditionsBannerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  conditionsBannerTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  conditionsManageLink: {
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  conditionTagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  activeConditionChip: {
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+  },
+  activeConditionText: {
+    fontSize: 11,
+    fontWeight: 'bold',
   },
   card: {
     padding: Spacing.md,
@@ -613,6 +1110,11 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(255,255,255,0.1)',
     gap: 6,
+  },
+  deathSavesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   deathSavesTitle: {
     fontSize: 12,
@@ -671,6 +1173,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.xs,
     marginTop: Spacing.xs,
+  },
+  historyList: {
+    gap: 6,
+  },
+  historyItem: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: Radius.sm,
+    borderLeftWidth: 3,
+  },
+  historyText: {
+    fontSize: 11,
+    lineHeight: 16,
   },
   attributesGrid: {
     flexDirection: 'row',
@@ -739,5 +1254,125 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    padding: Spacing.md,
+  },
+  modalContent: {
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  modalModeRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  modeTab: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  modeTabText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  modalInputSection: {
+    gap: 6,
+    marginTop: 4,
+  },
+  modalInputLabel: {
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  modalTextInput: {
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  quickValueRow: {
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'center',
+  },
+  quickValueChip: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+  },
+  quickValueText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  multipliersRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  multiplierChip: {
+    flex: 1,
+    paddingVertical: 6,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  multiplierText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  damageTypeScroll: {
+    gap: 6,
+    paddingVertical: 4,
+  },
+  damageTypeChip: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+  },
+  damageTypeText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    marginTop: Spacing.xs,
+  },
+  conditionRowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    padding: 10,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+  },
+  conditionRowIcon: {
+    fontSize: 22,
+  },
+  conditionRowName: {
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  conditionRowDesc: {
+    fontSize: 10,
+    lineHeight: 14,
   },
 });

@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { MOCK_CHARACTERS } from '@/data/mock-characters';
 import {
   Character,
+  CombatCondition,
   InventoryItem,
 } from '@/types/character';
 
@@ -21,6 +22,13 @@ interface CharacterContextData {
   deleteCharacter: (id: string) => Promise<void>;
   modifyHp: (id: string, delta: number) => Promise<void>;
   modifyTempHp: (id: string, tempHp: number) => Promise<void>;
+  toggleCondition: (charId: string, condition: CombatCondition) => Promise<void>;
+  toggleInspiration: (charId: string) => Promise<void>;
+  rollDeathSave: (charId: string) => Promise<{
+    roll: number;
+    result: 'success' | 'failure' | 'critical_success' | 'critical_failure';
+    message: string;
+  }>;
   shortRest: (id: string) => Promise<void>;
   longRest: (id: string) => Promise<void>;
   useSpellSlot: (id: string, slotLevel: number) => Promise<void>;
@@ -171,6 +179,67 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     await updateCharacter(id, { tempHp: Math.max(0, tempHp) });
   };
 
+  const toggleCondition = async (charId: string, condition: CombatCondition) => {
+    const target = characters.find((c) => c.id === charId);
+    if (!target) return;
+
+    const existing = target.conditions || [];
+    const hasCondition = existing.includes(condition);
+    const updatedConditions = hasCondition
+      ? existing.filter((c) => c !== condition)
+      : [...existing, condition];
+
+    await updateCharacter(charId, { conditions: updatedConditions });
+  };
+
+  const toggleInspiration = async (charId: string) => {
+    const target = characters.find((c) => c.id === charId);
+    if (!target) return;
+
+    await updateCharacter(charId, { hasInspiration: !target.hasInspiration });
+  };
+
+  const rollDeathSave = async (charId: string) => {
+    const target = characters.find((c) => c.id === charId);
+    if (!target) {
+      return { roll: 10, result: 'success' as const, message: 'Herói não encontrado' };
+    }
+
+    const roll = Math.floor(Math.random() * 20) + 1;
+    let newSuccesses = target.deathSaves.successes;
+    let newFailures = target.deathSaves.failures;
+    let result: 'success' | 'failure' | 'critical_success' | 'critical_failure' = 'success';
+    let message = '';
+
+    if (roll === 20) {
+      result = 'critical_success';
+      await updateCharacter(charId, {
+        currentHp: 1,
+        deathSaves: { successes: 0, failures: 0 },
+      });
+      message = '🎉 20 NATURAL! O herói recupera o fôlego com 1 PV e acorda!';
+      return { roll, result, message };
+    } else if (roll === 1) {
+      result = 'critical_failure';
+      newFailures = Math.min(3, newFailures + 2);
+      message = `💀 1 NATURAL! Desastre! 2 falhas sofridas (${newFailures}/3).`;
+    } else if (roll >= 10) {
+      result = 'success';
+      newSuccesses = Math.min(3, newSuccesses + 1);
+      message = `✨ Rolou ${roll} (>=10): Sucesso! (${newSuccesses}/3).`;
+    } else {
+      result = 'failure';
+      newFailures = Math.min(3, newFailures + 1);
+      message = `🩸 Rolou ${roll} (<10): Falha! (${newFailures}/3).`;
+    }
+
+    await updateCharacter(charId, {
+      deathSaves: { successes: newSuccesses, failures: newFailures },
+    });
+
+    return { roll, result, message };
+  };
+
   // Descansos (Regras D&D 5e / T20)
   const shortRest = async (id: string) => {
     const target = characters.find((c) => c.id === id);
@@ -304,6 +373,9 @@ export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         deleteCharacter,
         modifyHp,
         modifyTempHp,
+        toggleCondition,
+        toggleInspiration,
+        rollDeathSave,
         shortRest,
         longRest,
         useSpellSlot,

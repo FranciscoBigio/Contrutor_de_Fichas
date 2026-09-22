@@ -136,6 +136,36 @@ export interface DeathSaves {
   failures: number; // 0 a 3
 }
 
+export type CombatCondition =
+  | 'Cego'
+  | 'Enfeitiçado'
+  | 'Surdo'
+  | 'Amedrontado'
+  | 'Agarrado'
+  | 'Incapacitado'
+  | 'Invisível'
+  | 'Paralisado'
+  | 'Petrificado'
+  | 'Envenenado'
+  | 'Caído'
+  | 'Restringido'
+  | 'Atordoado'
+  | 'Inconsciente'
+  | 'Exaustão';
+
+export type DamageType =
+  | 'Físico'
+  | 'Fogo'
+  | 'Gelo'
+  | 'Elétrico'
+  | 'Ácido'
+  | 'Veneno'
+  | 'Radiante'
+  | 'Necrótico'
+  | 'Psíquico'
+  | 'Trovejante'
+  | 'Força';
+
 export interface CharacterBio {
   personalityTraits: string;
   ideals: string;
@@ -180,6 +210,8 @@ export interface Character {
   hitDice: string;
   hitDiceUsed: number;
   deathSaves: DeathSaves;
+  conditions?: CombatCondition[];
+  hasInspiration?: boolean;
 
   // Atributos & Testes de Resistência
   attributes: Attributes;
