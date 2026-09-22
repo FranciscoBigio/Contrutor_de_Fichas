@@ -1,13 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
+import {
+  RPGBadge,
+  RPGButton,
+  RPGCard,
+  RPGInput,
+  RPGPasswordInput,
+} from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/context/theme-context';
 
@@ -29,6 +35,11 @@ const PLANNED_SCREENS = [
 
 export default function HomeScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
+
+  // Estados locais para teste interativo dos componentes (Aula 3, Slide 12)
+  const [demoName, setDemoName] = useState('');
+  const [demoPassword, setDemoPassword] = useState('');
+  const [btnFeedback, setBtnFeedback] = useState('Nenhuma ação disparada');
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -56,84 +67,80 @@ export default function HomeScreen() {
         </View>
 
         {/* Hero Card do Projeto */}
-        <View
-          style={[
-            styles.heroCard,
-            {
-              backgroundColor: theme.backgroundCard,
-              borderColor: theme.border,
-            },
-          ]}
-        >
-          <Text style={[styles.badge, { backgroundColor: theme.primary, color: theme.primaryText }]}>
-            COMMIT #02 • v0.2.0 • TEMA FANTASY ATIVO
-          </Text>
+        <RPGCard variant="highlight" style={styles.heroCard}>
+          <RPGBadge label="COMMIT #03 • v0.3.0 • COMPONENTES BASE PRONTOS" variant="gold" />
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             ⚔️ QuestSheet RPG
           </Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            Aplicativo mobile híbrido com tema dinâmico Dark Fantasy / Pergaminho gerenciado via Context API e persistido no AsyncStorage.
+            Componentes modulares de formulário prontos: Input, PasswordInput (com toggle local), Button e Card.
           </Text>
 
-          {/* Botão Interativo de Alternância de Tema (Demonstrando Context API) */}
-          <TouchableOpacity
-            style={[
-              styles.themeToggleBtn,
-              {
-                backgroundColor: theme.backgroundElevated,
-                borderColor: theme.primary,
-              },
-            ]}
+          <RPGButton
+            title={`Alternar para ${isDark ? 'Pergaminho (Light)' : 'Dark Fantasy'}`}
+            icon={isDark ? '☀️' : '🌙'}
+            variant="secondary"
             onPress={toggleTheme}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.themeToggleIcon}>{isDark ? '☀️' : '🌙'}</Text>
-            <Text style={[styles.themeToggleText, { color: theme.text }]}>
-              Modo Atual: <Text style={{ color: theme.primary, fontWeight: 'bold' }}>{isDark ? 'Dark Fantasy' : 'Pergaminho (Light)'}</Text> (Toque para alternar)
-            </Text>
-          </TouchableOpacity>
+            style={{ width: '100%' }}
+          />
 
           <View style={styles.tagRow}>
-            <Text style={[styles.tag, { backgroundColor: theme.backgroundElevated, color: theme.textSecondary, borderColor: theme.border }]}>
-              Expo SDK 57
-            </Text>
-            <Text style={[styles.tag, { backgroundColor: theme.backgroundElevated, color: theme.textSecondary, borderColor: theme.border }]}>
-              React Native 0.86
-            </Text>
-            <Text style={[styles.tagHighlight, { backgroundColor: theme.hpBg, color: theme.hp, borderColor: theme.hp }]}>
-              SemVer v0.2.0
-            </Text>
-            <Text style={[styles.tagHighlight, { backgroundColor: theme.manaBg, color: theme.mana, borderColor: theme.mana }]}>
-              Context API Global
-            </Text>
+            <RPGBadge label="SemVer v0.3.0" variant="hp" size="sm" />
+            <RPGBadge label="Componentes em Árvore" variant="mana" size="sm" />
+            <RPGBadge label="Estado Local (Slide 14)" variant="arcane" size="sm" />
           </View>
-        </View>
+        </RPGCard>
 
-        {/* Paleta de Cores Semânticas do RPG (Tokens de Design da Aula 3) */}
+        {/* Demonstração dos Componentes de Formulário (Commit 3) */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
-            🎨 Paleta Semântica de RPG (Design Tokens)
+            🧪 Teste dos Componentes de Formulário
           </Text>
-          <View style={styles.paletteGrid}>
-            <View style={[styles.paletteBadge, { backgroundColor: theme.primary }]}>
-              <Text style={[styles.paletteText, { color: theme.primaryText }]}>Ouro Épico</Text>
+          <Text style={[styles.sectionDescription, { color: theme.textSecondary }]}>
+            Componentes desacoplados que serão reaproveitados nas telas de Login, Cadastro e Ficha (Aula 3, Slide 6):
+          </Text>
+
+          <RPGCard style={styles.formCard}>
+            <RPGInput
+              label="Nome do Aventureiro (Input)"
+              placeholder="Ex: Gandalf, Aragorn..."
+              value={demoName}
+              onChangeText={setDemoName}
+              icon="👤"
+              helperText={demoName ? `Olá, ${demoName}!` : 'Digite um nome para testar o input'}
+            />
+
+            <RPGPasswordInput
+              label="Senha de Acesso (PasswordInput com Estado Local)"
+              placeholder="Digite sua senha secreta..."
+              value={demoPassword}
+              onChangeText={setDemoPassword}
+              helperText="Clique no olho para alternar a visibilidade (Slide 14)"
+            />
+
+            <View style={styles.btnRow}>
+              <RPGButton
+                title="Ação Primária"
+                variant="primary"
+                icon="⚔️"
+                onPress={() => setBtnFeedback(`Aventureiro: ${demoName || 'Anônimo'} pronto para a batalha!`)}
+                style={{ flex: 1 }}
+              />
+              <RPGButton
+                title="Perigo"
+                variant="danger"
+                icon="🔥"
+                onPress={() => setBtnFeedback('Alerta de dano crítico!')}
+                style={{ flex: 1 }}
+              />
             </View>
-            <View style={[styles.paletteBadge, { backgroundColor: theme.accent }]}>
-              <Text style={[styles.paletteText, { color: '#FFFFFF' }]}>Carmesim</Text>
+
+            <View style={[styles.feedbackBox, { backgroundColor: theme.backgroundInput, borderColor: theme.border }]}>
+              <Text style={[styles.feedbackText, { color: theme.primary }]}>
+                Feedback: {btnFeedback}
+              </Text>
             </View>
-            <View style={[styles.paletteBadge, { backgroundColor: theme.hp }]}>
-              <Text style={[styles.paletteText, { color: '#FFFFFF' }]}>PV / Vida</Text>
-            </View>
-            <View style={[styles.paletteBadge, { backgroundColor: theme.mana }]}>
-              <Text style={[styles.paletteText, { color: '#FFFFFF' }]}>Mana / Magia</Text>
-            </View>
-            <View style={[styles.paletteBadge, { backgroundColor: theme.stamina }]}>
-              <Text style={[styles.paletteText, { color: '#0B0D12' }]}>Dados / Vigor</Text>
-            </View>
-            <View style={[styles.paletteBadge, { backgroundColor: theme.healing }]}>
-              <Text style={[styles.paletteText, { color: '#FFFFFF' }]}>Cura</Text>
-            </View>
-          </View>
+          </RPGCard>
         </View>
 
         {/* As 3 Camadas de Arquitetura (Slide 5 da Aula 3) */}
@@ -142,27 +149,27 @@ export default function HomeScreen() {
             🏛️ Arquitetura em 3 Camadas
           </Text>
           <View style={styles.layerContainer}>
-            <View style={[styles.layerCard, { backgroundColor: theme.backgroundCard, borderColor: theme.border }]}>
+            <RPGCard style={styles.layerCard}>
               <Text style={styles.layerIcon}>🖥️</Text>
               <Text style={[styles.layerTitle, { color: theme.text }]}>1. Apresentação (UI)</Text>
               <Text style={[styles.layerDesc, { color: theme.textSecondary }]}>
-                Componentes em árvore, StyleSheet Flexbox e suporte a Dark Fantasy / Pergaminho.
+                Componentes atômicos e reaproveitáveis: RPGButton, RPGInput, RPGCard e RPGBadge.
               </Text>
-            </View>
-            <View style={[styles.layerCard, { backgroundColor: theme.backgroundCard, borderColor: theme.border }]}>
+            </RPGCard>
+            <RPGCard style={styles.layerCard}>
               <Text style={styles.layerIcon}>🧠</Text>
-              <Text style={[styles.layerTitle, { color: theme.text }]}>2. Estado (Context API)</Text>
+              <Text style={[styles.layerTitle, { color: theme.text }]}>2. Estado (Local × Global)</Text>
               <Text style={[styles.layerDesc, { color: theme.textSecondary }]}>
-                ThemeContext global distribuído via ThemeProvider, sem prop drilling (Aula 3).
+                Visibilidade de senha e foco em useState local; tema em ThemeContext global.
               </Text>
-            </View>
-            <View style={[styles.layerCard, { backgroundColor: theme.backgroundCard, borderColor: theme.border }]}>
+            </RPGCard>
+            <RPGCard style={styles.layerCard}>
               <Text style={styles.layerIcon}>💾</Text>
               <Text style={[styles.layerTitle, { color: theme.text }]}>3. Dados & Resiliência</Text>
               <Text style={[styles.layerDesc, { color: theme.textSecondary }]}>
-                Preferencia de tema persistida via AsyncStorage (Aula 4) e tokens via SecureStore.
+                SecureStore pronto para tokens JWT (OWASP M2) e AsyncStorage para tema.
               </Text>
-            </View>
+            </RPGCard>
           </View>
         </View>
 
@@ -173,28 +180,19 @@ export default function HomeScreen() {
           </Text>
           <View style={styles.screenList}>
             {PLANNED_SCREENS.map((item) => (
-              <View
-                key={item.id}
-                style={[
-                  styles.screenCard,
-                  {
-                    backgroundColor: theme.backgroundCard,
-                    borderColor: theme.border,
-                  },
-                ]}
-              >
+              <RPGCard key={item.id} style={styles.screenCard}>
                 <Text style={styles.screenIcon}>{item.icon}</Text>
                 <View style={styles.screenTextContainer}>
                   <Text style={[styles.screenTitle, { color: theme.text }]}>{item.title}</Text>
                   <Text style={[styles.screenDesc, { color: theme.textSecondary }]}>{item.desc}</Text>
                 </View>
-              </View>
+              </RPGCard>
             ))}
           </View>
         </View>
 
         {/* Checklist do Repositório (Slide 17 da Aula 5) */}
-        <View style={[styles.checklistCard, { backgroundColor: theme.backgroundCard, borderColor: theme.border }]}>
+        <RPGCard style={styles.checklistCard}>
           <Text style={[styles.checklistTitle, { color: theme.text }]}>
             ✅ Checklist do Repositório (Prof. Garrido)
           </Text>
@@ -202,15 +200,15 @@ export default function HomeScreen() {
             ✔ Commit 01 efetuado com sucesso (v0.1.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commit 02 em execução: Tema Fantasy Dark & Light configurado
+            ✔ Commit 02 efetuado com sucesso (v0.2.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Context API global funcionando com ThemeProvider nativo
+            ✔ Commit 03 pronto: Componentes base de formulário criados (v0.3.0)
           </Text>
           <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Persistência de preferências de UI no AsyncStorage (Aula 4)
+            ✔ Próximo: Tela de Login do Aventureiro (Commit 04 - v0.4.0)
           </Text>
-        </View>
+        </RPGCard>
       </ScrollView>
     </SafeAreaView>
   );
@@ -245,19 +243,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   heroCard: {
-    borderRadius: Radius.lg,
-    padding: Spacing.md + 4,
-    borderWidth: 1,
     alignItems: 'center',
     gap: Spacing.sm,
-  },
-  badge: {
-    fontWeight: 'bold',
-    fontSize: 11,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-    overflow: 'hidden',
   },
   heroTitle: {
     fontSize: 26,
@@ -269,42 +256,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
   },
-  themeToggleBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    gap: 8,
-    marginVertical: 4,
-  },
-  themeToggleIcon: {
-    fontSize: 18,
-  },
-  themeToggleText: {
-    fontSize: 12,
-  },
   tagRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
     justifyContent: 'center',
-  },
-  tag: {
-    fontSize: 11,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-    borderWidth: 1,
-  },
-  tagHighlight: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-    borderWidth: 1,
+    marginTop: Spacing.xs,
   },
   section: {
     gap: 10,
@@ -313,27 +270,33 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: 'bold',
   },
-  paletteGrid: {
+  sectionDescription: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  formCard: {
+    gap: Spacing.md,
+  },
+  btnRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
   },
-  paletteBadge: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+  feedbackBox: {
+    padding: Spacing.sm,
     borderRadius: Radius.sm,
+    borderWidth: 1,
+    alignItems: 'center',
   },
-  paletteText: {
-    fontSize: 11,
-    fontWeight: 'bold',
+  feedbackText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   layerContainer: {
     gap: 8,
   },
   layerCard: {
-    borderRadius: Radius.md,
     padding: 12,
-    borderWidth: 1,
   },
   layerIcon: {
     fontSize: 20,
@@ -354,10 +317,8 @@ const styles = StyleSheet.create({
   screenCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: Radius.md,
-    padding: 12,
-    borderWidth: 1,
     gap: 10,
+    padding: 12,
   },
   screenIcon: {
     fontSize: 22,
@@ -375,9 +336,7 @@ const styles = StyleSheet.create({
     lineHeight: 15,
   },
   checklistCard: {
-    borderRadius: Radius.lg,
     padding: Spacing.md,
-    borderWidth: 1,
     gap: 6,
   },
   checklistTitle: {
