@@ -515,7 +515,7 @@ export default function SettingsScreen() {
             Disciplina: Aplicativos Híbridos{'\n'}
             Professor: <Text style={{ color: theme.text, fontWeight: 'bold' }}>Márcio Garrido</Text>{'\n'}
             Aluno: <Text style={{ color: theme.primary, fontWeight: 'bold' }}>Francisco Bigio</Text>{'\n'}
-            Versão: <Text style={{ color: theme.textGold, fontWeight: 'bold' }}>v0.23.2</Text> • Expo SDK 57 / React Native 0.86
+            Versão: <Text style={{ color: theme.textGold, fontWeight: 'bold' }}>v0.23.3</Text> • Expo SDK 57 / React Native 0.86
           </Text>
 
           <View style={styles.techTagsRow}>

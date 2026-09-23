@@ -15,13 +15,16 @@ import {
   RPGButton,
   RPGCard,
   RPGInput,
+  RPGPasswordInput,
 } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
+import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const { resetPassword } = useAuth();
 
   // Estados locais da tela (Aula 3, Slide 12 - Estado LOCAL)
   const [email, setEmail] = useState('');
@@ -29,6 +32,7 @@ export default function ForgotPasswordScreen() {
   const [isSent, setIsSent] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [countdown, setCountdown] = useState(0);
 
   // Temporizador local de reenvio de código (Aula 2 - Timers e ciclo assíncrono)
@@ -56,17 +60,32 @@ export default function ForgotPasswordScreen() {
       setLoading(false);
       setIsSent(true);
       setCountdown(60);
-    }, 1200);
+    }, 800);
   };
 
-  const handleConfirmCode = () => {
+  const handleConfirmCode = async () => {
     if (!resetCode.trim() || resetCode.length < 4) {
-      setErrorMessage('Informe o código de 4 a 6 dígitos enviado.');
+      setErrorMessage('Informe o código de verificação recebido.');
       return;
     }
 
-    // Sucesso simulado: redireciona para a tela de login
-    router.replace('/auth/login' as any);
+    if (newPassword && newPassword.length < 6) {
+      setErrorMessage('A nova senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (newPassword) {
+        await resetPassword(email, newPassword);
+      }
+      setLoading(false);
+      // Redireciona para o login
+      router.replace('/auth/login' as any);
+    } catch {
+      setLoading(false);
+      router.replace('/auth/login' as any);
+    }
   };
 
   return (
@@ -75,11 +94,14 @@ export default function ForgotPasswordScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Cabeçalho Temático */}
           <View style={styles.header}>
             <Text style={styles.headerIcon}>🔑</Text>
-            <RPGBadge label="TELA 3 DE 11 • RECUPERAÇÃO" variant="stamina" size="sm" />
+            <RPGBadge label="RECUPERAÇÃO DE RUNAS" variant="stamina" size="sm" />
             <Text style={[styles.title, { color: theme.text }]}>
               Redefinição de Runas
             </Text>
@@ -152,10 +174,21 @@ export default function ForgotPasswordScreen() {
                   icon="🛡️"
                 />
 
+                <RPGPasswordInput
+                  label="Nova Runa Secreta (Nova Senha)"
+                  placeholder="Mínimo 6 caracteres..."
+                  value={newPassword}
+                  onChangeText={(text) => {
+                    setNewPassword(text);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                />
+
                 <RPGButton
                   title="Validar Código e Redefinir"
                   variant="primary"
                   icon="🔓"
+                  loading={loading}
                   onPress={handleConfirmCode}
                 />
 

@@ -39,18 +39,18 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     setErrorMessage('');
 
-    if (!name.trim()) {
-      setErrorMessage('Informe o nome do seu aventureiro.');
+    if (!name.trim() || name.trim().length < 2) {
+      setErrorMessage('Informe o nome do seu aventureiro (mínimo 2 letras).');
       return;
     }
 
-    if (!email.trim()) {
-      setErrorMessage('Informe um e-mail válido.');
+    if (!email.trim() || !email.includes('@') || !email.includes('.')) {
+      setErrorMessage('Informe um e-mail válido da guilda (ex: aventureiro@guilda.com).');
       return;
     }
 
     if (!password) {
-      setErrorMessage('Informe uma senha secreta.');
+      setErrorMessage('Informe uma senha secreta de acesso.');
       return;
     }
 
@@ -65,13 +65,18 @@ export default function RegisterScreen() {
     }
 
     setLoading(true);
-    const result = await register(name, email, password, role);
-    setLoading(false);
+    try {
+      const result = await register(name, email, password, role);
+      setLoading(false);
 
-    if (result.success) {
-      router.replace('/' as any);
-    } else {
-      setErrorMessage(result.error || 'Falha ao registrar conta.');
+      if (result.success) {
+        router.replace('/' as any);
+      } else {
+        setErrorMessage(result.error || 'Falha ao registrar conta.');
+      }
+    } catch (err: any) {
+      setLoading(false);
+      setErrorMessage(err?.message || 'Erro inesperado ao realizar cadastro.');
     }
   };
 
@@ -81,11 +86,14 @@ export default function RegisterScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Cabeçalho Temático */}
           <View style={styles.header}>
             <Text style={styles.headerIcon}>📝</Text>
-            <RPGBadge label="TELA 2 DE 11 • CADASTRO" variant="mana" size="sm" />
+            <RPGBadge label="CADASTRO DA GUILDA" variant="mana" size="sm" />
             <Text style={[styles.title, { color: theme.text }]}>
               Grimório de Registro
             </Text>

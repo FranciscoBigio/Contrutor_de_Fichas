@@ -17,6 +17,7 @@ import {
 } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useCharacters } from '@/context/character-context';
+import { useSettings } from '@/context/settings-context';
 import { useTheme } from '@/context/theme-context';
 import { Attributes, calculateModifier, formatModifier } from '@/types/character';
 import {
@@ -59,6 +60,7 @@ export default function CharacterDiceScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme } = useTheme();
   const { getCharacterById, activeCharacter } = useCharacters();
+  const { settings } = useSettings();
 
   const character = (id ? getCharacterById(id) : null) || activeCharacter;
 
@@ -214,7 +216,12 @@ export default function CharacterDiceScreen() {
                   {character.race} • {character.class} (Nível {character.level})
                 </Text>
               </View>
-              <RPGBadge label="🎲 Rolador Integrado" variant="gold" size="md" />
+              <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                <RPGBadge label="🎲 Rolador Integrado" variant="gold" size="md" />
+                {settings.diceSoundEffects ? (
+                  <RPGBadge label="🔊 Som Ativo" variant="mana" size="sm" />
+                ) : null}
+              </View>
             </View>
           </RPGCard>
         ) : null}

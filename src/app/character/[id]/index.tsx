@@ -20,6 +20,7 @@ import {
 } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useCharacters } from '@/context/character-context';
+import { useSettings } from '@/context/settings-context';
 import { useTheme } from '@/context/theme-context';
 import {
   Attributes,
@@ -97,6 +98,7 @@ export default function CharacterGeneralSheetScreen() {
     updateCharacter,
     exportCharacterAsJson,
   } = useCharacters();
+  const { settings } = useSettings();
 
   const character = (id ? getCharacterById(id) : null) || activeCharacter;
 
@@ -169,17 +171,59 @@ export default function CharacterGeneralSheetScreen() {
       return;
     }
 
+    if (!character) return;
+
     if (calcMode === 'damage') {
-      rpgHapticDamage();
       const finalDmg = Math.max(1, Math.round(val * damageMultiplier));
-      await modifyHp(character.id, -finalDmg);
-      const multiText =
-        damageMultiplier === 0.5
-          ? ' (Resistência: ½)'
-          : damageMultiplier === 2
-          ? ' (Vulnerabilidade: 2x)'
-          : '';
-      addCombatLog(`💥 Dano de ${selectedDamageType}: ${finalDmg} PV${multiText}!`);
+      const willBeLethal = character.currentHp - finalDmg <= 0;
+
+      const executeApplyDamage = async () => {
+        rpgHapticDamage();
+        await modifyHp(character.id, -finalDmg);
+        const multiText =
+          damageMultiplier === 0.5
+            ? ' (Resistência: ½)'
+            : damageMultiplier === 2
+            ? ' (Vulnerabilidade: 2x)'
+            : '';
+        addCombatLog(`💥 Dano de ${selectedDamageType}: ${finalDmg} PV${multiText}!`);
+
+        if (willBeLethal && settings.autoDeathSave) {
+          Alert.alert(
+            '💀 Aventureiro Inconsciente!',
+            `${character.name} caiu com 0 Pontos de Vida. As Salvaguardas Contra a Morte foram ativadas!`,
+            [
+              {
+                text: 'Fazer Teste de Morte',
+                onPress: () => handleRollDeathSave(),
+              },
+              { text: 'Ok', style: 'cancel' },
+            ]
+          );
+        }
+      };
+
+      if (settings.confirmActions && willBeLethal) {
+        Alert.alert(
+          '⚠️ Confirmar Dano Letal',
+          `Esse ataque de ${finalDmg} PV deixará ${character.name} inconsciente (0 PV). Confirmar dano?`,
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+              text: 'Aplicar Dano',
+              style: 'destructive',
+              onPress: async () => {
+                await executeApplyDamage();
+                setCustomAmount('');
+                setIsDamageModalVisible(false);
+              },
+            },
+          ]
+        );
+        return;
+      }
+
+      await executeApplyDamage();
     } else if (calcMode === 'heal') {
       rpgHapticHeal();
       await modifyHp(character.id, val);
@@ -195,6 +239,7 @@ export default function CharacterGeneralSheetScreen() {
   };
 
   const handleRollInitiative = () => {
+    if (!character) return;
     const d20 = Math.floor(Math.random() * 20) + 1;
     if (d20 === 20) {
       rpgHapticCriticalSuccess();
@@ -209,6 +254,7 @@ export default function CharacterGeneralSheetScreen() {
   };
 
   const handleRollDeathSave = async () => {
+    if (!character) return;
     const res = await rollDeathSave(character.id);
     if (res.result === 'critical_success') {
       rpgHapticCriticalSuccess();
@@ -222,6 +268,7 @@ export default function CharacterGeneralSheetScreen() {
   };
 
   const handleToggleInspiration = async () => {
+    if (!character) return;
     rpgHapticSelection();
     await toggleInspiration(character.id);
     addCombatLog(
@@ -232,6 +279,7 @@ export default function CharacterGeneralSheetScreen() {
   };
 
   const handleShortRest = async () => {
+    if (!character) return;
     rpgHapticHeal();
     await shortRest(character.id);
     addCombatLog('☕ Descanso Curto concluído (PVs recuperados com dado de vida).');
@@ -239,10 +287,26 @@ export default function CharacterGeneralSheetScreen() {
   };
 
   const handleLongRest = async () => {
-    rpgHapticHeal();
-    await longRest(character.id);
-    addCombatLog('⛺ Descanso Longo concluído (100% PV, slots de magia e dados restaurados).');
-    Alert.alert('⛺ Descanso Longo', `${character.name} descansou completamente. PV ao máximo e magias recarregadas!`);
+    if (!character) return;
+    const executeLongRest = async () => {
+      rpgHapticHeal();
+      await longRest(character.id);
+      addCombatLog('⛺ Descanso Longo concluído (100% PV, slots de magia e dados restaurados).');
+      Alert.alert('⛺ Descanso Longo', `${character.name} descansou completamente. PV ao máximo e magias recarregadas!`);
+    };
+
+    if (settings.confirmActions) {
+      Alert.alert(
+        '⛺ Confirmar Descanso Longo (8 Horas)',
+        `Deseja aplicar o descanso longo para ${character.name}? Todos os Pontos de Vida e espaços de magia serão restaurados.`,
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Confirmar Descanso', onPress: executeLongRest },
+        ]
+      );
+    } else {
+      await executeLongRest();
+    }
   };
 
   const toggleDeathSave = async (type: 'successes' | 'failures', index: number) => {

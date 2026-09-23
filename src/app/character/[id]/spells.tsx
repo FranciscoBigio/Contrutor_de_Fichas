@@ -19,6 +19,7 @@ import {
 } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useCharacters } from '@/context/character-context';
+import { useSettings } from '@/context/settings-context';
 import { useTheme } from '@/context/theme-context';
 import {
   Attributes,
@@ -51,6 +52,7 @@ export default function CharacterSpellsScreen() {
     deleteSpell,
     initializeSpellcasting,
   } = useCharacters();
+  const { settings } = useSettings();
 
   const character = (id ? getCharacterById(id) : null) || activeCharacter;
 
@@ -135,11 +137,26 @@ export default function CharacterSpellsScreen() {
       return;
     }
 
-    await consumeSpellSlot(character.id, spell.level);
-    Alert.alert(
-      '🔮 Magia Conjurada!',
-      `${character.name} conjurou ${spell.name} (${spell.level}º Círculo)!\nRestam ${slot.total - (slot.used + 1)} espaços disponíveis.`
-    );
+    const executeCast = async () => {
+      await consumeSpellSlot(character.id, spell.level);
+      Alert.alert(
+        '🔮 Magia Conjurada!',
+        `${character.name} conjurou ${spell.name} (${spell.level}º Círculo)!\nRestam ${slot.total - (slot.used + 1)} espaços disponíveis.`
+      );
+    };
+
+    if (settings.confirmActions && spell.level >= 3) {
+      Alert.alert(
+        '🔮 Confirmar Conjuração',
+        `Deseja gastar 1 espaço de magia de ${spell.level}º Círculo para conjurar "${spell.name}"?`,
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Conjurar Magia', onPress: executeCast },
+        ]
+      );
+    } else {
+      await executeCast();
+    }
   };
 
   // Ação de Salvar Nova Magia
@@ -281,7 +298,20 @@ export default function CharacterSpellsScreen() {
                   title="Recarregar Tudo 🌙"
                   variant="ghost"
                   size="sm"
-                  onPress={() => restoreAllSpellSlots(character.id)}
+                  onPress={() => {
+                    if (settings.confirmActions) {
+                      Alert.alert(
+                        '🌙 Restaurar Espaços de Magia',
+                        'Deseja recarregar todos os círculos de magia deste herói?',
+                        [
+                          { text: 'Cancelar', style: 'cancel' },
+                          { text: 'Recarregar', onPress: () => restoreAllSpellSlots(character.id) },
+                        ]
+                      );
+                    } else {
+                      restoreAllSpellSlots(character.id);
+                    }
+                  }}
                 />
               </View>
 

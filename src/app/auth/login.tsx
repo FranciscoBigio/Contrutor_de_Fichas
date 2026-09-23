@@ -36,8 +36,8 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     setErrorMessage('');
 
-    if (!email.trim()) {
-      setErrorMessage('Informe seu e-mail de aventureiro.');
+    if (!email.trim() || !email.includes('@')) {
+      setErrorMessage('Informe um e-mail válido de aventureiro.');
       return;
     }
 
@@ -47,21 +47,31 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
-    const result = await login(email, password);
-    setLoading(false);
+    try {
+      const result = await login(email, password);
+      setLoading(false);
 
-    if (result.success) {
-      router.replace('/' as any);
-    } else {
-      setErrorMessage(result.error || 'Falha ao autenticar.');
+      if (result.success) {
+        router.replace('/' as any);
+      } else {
+        setErrorMessage(result.error || 'Falha ao autenticar.');
+      }
+    } catch (err: any) {
+      setLoading(false);
+      setErrorMessage(err?.message || 'Erro inesperado ao conectar.');
     }
   };
 
   const handleGuestLogin = async () => {
     setLoading(true);
-    await loginAsGuest();
-    setLoading(false);
-    router.replace('/' as any);
+    try {
+      await loginAsGuest();
+      setLoading(false);
+      router.replace('/' as any);
+    } catch {
+      setLoading(false);
+      router.replace('/' as any);
+    }
   };
 
   return (
@@ -70,11 +80,14 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Cabeçalho Temático */}
           <View style={styles.header}>
             <Text style={styles.headerIcon}>🛡️</Text>
-            <RPGBadge label="TELA 1 DE 11 • AUTENTICAÇÃO" variant="gold" size="sm" />
+            <RPGBadge label="PORTAL DE ACESSO" variant="gold" size="sm" />
             <Text style={[styles.title, { color: theme.text }]}>
               Portal do Aventureiro
             </Text>
