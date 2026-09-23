@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -12,424 +13,502 @@ import {
   RPGBadge,
   RPGButton,
   RPGCard,
+  RPGHpBar,
 } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { Radius, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import { useCharacters } from '@/context/character-context';
 import { useTheme } from '@/context/theme-context';
-
-const PLANNED_SCREENS = [
-  // Módulo 1: Autenticação & Acesso (100% Concluído!)
-  { id: '1', title: '1. Login do Aventureiro (PRONTA)', desc: 'Acesso seguro com validações e token JWT via SecureStore', icon: '🔐', ready: true, route: '/auth/login' },
-  { id: '2', title: '2. Cadastro de Conta (PRONTA)', desc: 'Registro com perfil de Mestre ou Jogador e persistência no SecureStore', icon: '📝', ready: true, route: '/auth/register' },
-  { id: '3', title: '3. Recuperação de Senha (PRONTA)', desc: 'Redefinição de acesso com envio simulado de código e timer de reenvio', icon: '🔑', ready: true, route: '/auth/forgot-password' },
-  // Módulo 2: Gerenciamento & Ficha do RPG (Iniciado no Commit 07!)
-  { id: '4', title: '4. Meus Personagens (HUB 1) (PRONTA)', desc: 'Dashboard com busca em tempo real, filtros por classe, barra de vida e status', icon: '🛡️', ready: true, route: '/characters' },
-  { id: '5', title: '5. Criação de Herói (PRONTA)', desc: 'Assistente completo em 2 etapas: origem, alocação de atributos, PV e salvamento', icon: '✨', ready: true, route: '/create' },
-  { id: '6', title: '6. Ficha Geral / HUB 2 (PRONTA)', desc: 'HP dinâmico, CA, Iniciativa, dados de vida e descanso de combate', icon: '⚔️', ready: true, route: '/character/hero-1' },
-  { id: '7', title: '7. Perícias & Salvaguardas (PRONTA)', desc: '18 perícias clássicas do D&D 5e com cálculo de bônus, maestria e sentidos passivos', icon: '🎯', ready: true, route: '/character/hero-1/skills' },
-  { id: '8', title: '8. Grimório & Magias (PRONTA)', desc: 'Controle de Spell Slots por círculo, magias preparadas e conjuração', icon: '🔮', ready: true, route: '/character/char-elora-03/spells' },
-  { id: '9', title: '9. Inventário & Equipamentos (PRONTA)', desc: 'Mochila, armas com rolagem de dano, bolsa de 5 moedas (PO/PP/PC) e capacidade de carga D&D 5e', icon: '🎒', ready: true, route: '/character/hero-1/inventory' },
-  { id: '10', title: '10. Biografia & Habilidades (PRONTA)', desc: 'História, características de raça/classe, traços de personalidade, ideais, vínculos, defeitos e notas', icon: '📜', ready: true, route: '/character/hero-1/bio' },
-  { id: '11', title: '11. Rolador de Dados Integrado (PRONTA)', desc: 'Rolagens poliédricas (d4 a d100), testes rápidos de atributos, vantagem/desvantagem, críticos e histórico', icon: '🎲', ready: true, route: '/dice' },
-  { id: '12', title: '12. Configurações & Preferências (PRONTA)', desc: 'Persistência no AsyncStorage, temas, haptics, regras de sobrecarga e backup JSON', icon: '⚙️', ready: true, route: '/settings' },
-];
+import { rpgHapticSelection } from '@/utils/haptics';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { theme, isDark, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
-  const { characters, activeCharacter, setActiveCharacterId, resetToMock, loading: charsLoading } = useCharacters();
+  const { characters, activeCharacter } = useCharacters();
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Banner do Aluno e Disciplina (Universidade de Vassouras) */}
-        <View
-          style={[
-            styles.academicBanner,
-            {
-              backgroundColor: theme.backgroundCard,
-              borderLeftColor: theme.primary,
-              borderColor: theme.border,
-            },
-          ]}
-        >
-          <Text style={[styles.institutionText, { color: theme.textSecondary }]}>
-            UNIVERSIDADE DE VASSOURAS • ENGENHARIA DE SOFTWARE
-          </Text>
-          <Text style={[styles.courseText, { color: theme.text }]}>
-            Disciplina: Aplicativos Híbridos • Prof. Márcio Garrido
-          </Text>
-          <Text style={[styles.authorHighlight, { color: theme.primary }]}>
-            Aluno: Francisco Bigio
-          </Text>
-        </View>
-
-        {/* Hero Card do Projeto */}
-        <RPGCard variant="highlight" style={styles.heroCard}>
-          <RPGBadge label="COMMIT #23.1 • v0.23.1 • CORREÇÃO & PERSISTÊNCIA DE CONFIGURAÇÕES" variant="gold" />
-          <Text style={[styles.heroTitle, { color: theme.text }]}>
-            ⚔️ QuestSheet RPG
-          </Text>
-          <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            Configurações globais salvas no AsyncStorage com SettingsContext, feedback tátil sincronizado e 12 telas 100% integradas!
-          </Text>
-
-          {/* Card de Sessão do Usuário */}
-          <View style={[styles.sessionBox, { backgroundColor: theme.backgroundInput, borderColor: theme.border }]}>
-            {isAuthenticated && user ? (
-              <View style={styles.sessionContent}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.sessionGreeting, { color: theme.text }]}>
-                    👑 {user.role === 'master' ? 'Mestre da Masmorra' : 'Aventureiro'}: <Text style={{ color: theme.primary, fontWeight: 'bold' }}>{user.name}</Text>
-                  </Text>
-                  <Text style={[styles.sessionEmail, { color: theme.textSecondary }]}>
-                    {user.email} (Sessão salva no SecureStore)
-                  </Text>
-                </View>
-                <RPGButton
-                  title="Sair"
-                  variant="danger"
-                  size="sm"
-                  onPress={logout}
-                />
-              </View>
-            ) : (
-              <View style={styles.sessionContent}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.sessionGreeting, { color: theme.text }]}>
-                    Sessão: Não Autenticado
-                  </Text>
-                  <Text style={[styles.sessionEmail, { color: theme.textSecondary }]}>
-                    Acesse o módulo de autenticação abaixo
-                  </Text>
-                </View>
-                <RPGButton
-                  title="Abrir Login"
-                  variant="primary"
-                  size="sm"
-                  icon="🔐"
-                  onPress={() => router.push('/auth/login' as any)}
-                />
-              </View>
-            )}
-          </View>
-
-          <View style={{ flexDirection: 'row', gap: Spacing.xs, width: '100%' }}>
-            <RPGButton
-              title="⚙️ Configurações & Backup"
-              variant="primary"
-              icon="📦"
-              onPress={() => router.push('/settings' as any)}
-              style={{ flex: 1.2 }}
-            />
-            <RPGButton
-              title={isDark ? '☀️ Light' : '🌙 Dark'}
-              variant="secondary"
-              onPress={toggleTheme}
-              style={{ flex: 0.8 }}
-            />
-          </View>
-
-          <View style={styles.tagRow}>
-            <RPGBadge label="SemVer v0.23.1" variant="hp" size="sm" />
-            <RPGBadge label="23+ Commits Concluídos" variant="mana" size="sm" />
-            <RPGBadge label="Sombras & Auras" variant="gold" size="sm" />
-          </View>
-        </RPGCard>
-
-        {/* Atalhos Rápidos para as Telas Concluídas */}
-        <RPGCard style={styles.actionCard}>
-          <Text style={[styles.actionTitle, { color: theme.text }]}>
-            🚀 Atalhos para as Telas Prontas (12 Telas)
-          </Text>
-          <Text style={[styles.actionDesc, { color: theme.textSecondary }]}>
-            Todas as 11 telas do RPG + Tela 12 de Configurações 100% integradas:
-          </Text>
-          <View style={{ gap: Spacing.xs }}>
-            <RPGButton
-              title="⚙️ Abrir Tela 12: Configurações & Ajustes"
-              variant="primary"
-              icon="🛠️"
-              onPress={() => router.push('/settings' as any)}
-              style={{ width: '100%' }}
-            />
-            <RPGButton
-              title="🎲 Abrir Tela 11: Rolador de Dados Poliédrico"
-              variant="secondary"
-              icon="👑"
-              onPress={() => router.push((activeCharacter ? `/character/${activeCharacter.id}/dice` : '/dice') as any)}
-              style={{ width: '100%' }}
-            />
-            <RPGButton
-              title="📜 Abrir Tela 10: Biografia & Habilidades"
-              variant="secondary"
-              icon="✨"
-              onPress={() => router.push((activeCharacter ? `/character/${activeCharacter.id}/bio` : '/character/hero-1/bio') as any)}
-              style={{ width: '100%' }}
-            />
-            <RPGButton
-              title="🎒 Abrir Tela 9: Inventário & Mochila"
-              variant="secondary"
-              icon="⚔️"
-              onPress={() => router.push((activeCharacter ? `/character/${activeCharacter.id}/inventory` : '/character/hero-1/inventory') as any)}
-              style={{ width: '100%' }}
-            />
-            <RPGButton
-              title="🔮 Abrir Tela 8: Grimório & Magias"
-              variant="secondary"
-              icon="🔮"
-              onPress={() => router.push((activeCharacter ? `/character/${activeCharacter.id}/spells` : '/character/char-elora-03/spells') as any)}
-              style={{ width: '100%' }}
-            />
-            <RPGButton
-              title="🎯 Abrir Tela 7: Perícias & Salvaguardas"
-              variant="secondary"
-              icon="🎲"
-              onPress={() => router.push((activeCharacter ? `/character/${activeCharacter.id}/skills` : '/character/hero-1/skills') as any)}
-              style={{ width: '100%' }}
-            />
-            <RPGButton
-              title="⚔️ Abrir Tela 6: Ficha de Combate (HUB 2)"
-              variant="secondary"
-              icon="🩸"
-              onPress={() => router.push((activeCharacter ? `/character/${activeCharacter.id}` : '/character/hero-1') as any)}
-              style={{ width: '100%' }}
-            />
-            <RPGButton
-              title="🛡️ Abrir Tela 4: Meus Personagens (HUB 1)"
-              variant="secondary"
-              icon="📜"
-              onPress={() => router.push('/characters' as any)}
-              style={{ width: '100%' }}
-            />
-          </View>
-          <View style={styles.actionBtnRow}>
-            <RPGButton
-              title="1. Login"
-              variant="secondary"
-              icon="🔐"
-              size="sm"
-              onPress={() => router.push('/auth/login' as any)}
-              style={{ flex: 1 }}
-            />
-            <RPGButton
-              title="2. Cadastro"
-              variant="secondary"
-              icon="📝"
-              size="sm"
-              onPress={() => router.push('/auth/register' as any)}
-              style={{ flex: 1 }}
-            />
-            <RPGButton
-              title="3. Recuperar"
-              variant="secondary"
-              icon="🔑"
-              size="sm"
-              onPress={() => router.push('/auth/forgot-password' as any)}
-              style={{ flex: 1 }}
-            />
-          </View>
-        </RPGCard>
-
-        {/* As 3 Camadas de Arquitetura (Slide 5 da Aula 3) */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>
-            🏛️ Arquitetura em 3 Camadas
-          </Text>
-          <View style={styles.layerContainer}>
-            <RPGCard style={styles.layerCard}>
-              <Text style={styles.layerIcon}>🖥️</Text>
-              <Text style={[styles.layerTitle, { color: theme.text }]}>1. Apresentação (UI)</Text>
-              <Text style={[styles.layerDesc, { color: theme.textSecondary }]}>
-                3 Telas de Acesso finalizadas: Login, Cadastro e Recuperação com componentes temáticos.
-              </Text>
-            </RPGCard>
-            <RPGCard style={styles.layerCard}>
-              <Text style={styles.layerIcon}>🧠</Text>
-              <Text style={[styles.layerTitle, { color: theme.text }]}>2. Estado (Local × Global)</Text>
-              <Text style={[styles.layerDesc, { color: theme.textSecondary }]}>
-                AuthContext com tokens JWT; timers e visibilidade de senhas gerenciados em useState local.
-              </Text>
-            </RPGCard>
-            <RPGCard style={styles.layerCard}>
-              <Text style={styles.layerIcon}>💾</Text>
-              <Text style={[styles.layerTitle, { color: theme.text }]}>3. Dados & Resiliência</Text>
-              <Text style={[styles.layerDesc, { color: theme.textSecondary }]}>
-                Criptografia no SecureStore (Keychain/Keystore) para tokens e dados de sessão (OWASP M2).
-              </Text>
-            </RPGCard>
-          </View>
-        </View>
-
-        {/* Mock de Personagens Carregados na Camada de Estado & AsyncStorage (Commit 07) */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>
-              🛡️ Heróis Carregados ({characters.length} Fichas)
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Barra Superior / Header do App */}
+        <View style={styles.headerBar}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.appTitle, { color: theme.primary }]}>
+              ⚔️ QuestSheet RPG
             </Text>
-            <RPGBadge label="ASYNCSTORAGE OFFLINE" variant="gold" size="sm" />
+            <Text style={[styles.appTagline, { color: theme.textSecondary }]}>
+              Gestor de Fichas D&D 5e & Taverna Digital
+            </Text>
           </View>
-          <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
-            Estrutura de dados D&D 5e / T20 com PV, CA, magias, perícias e inventário persistidos:
-          </Text>
+          <View style={styles.headerActions}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.iconButton,
+                {
+                  backgroundColor: theme.backgroundCard,
+                  borderColor: theme.border,
+                  opacity: pressed ? 0.7 : 1,
+                },
+                Shadows.sm,
+              ]}
+              onPress={toggleTheme}
+              accessibilityLabel="Alternar tema visual"
+            >
+              <Text style={styles.iconButtonText}>{isDark ? '☀️' : '🌙'}</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.iconButton,
+                {
+                  backgroundColor: theme.backgroundCard,
+                  borderColor: theme.border,
+                  opacity: pressed ? 0.7 : 1,
+                },
+                Shadows.sm,
+              ]}
+              onPress={() => {
+                rpgHapticSelection();
+                router.push('/settings' as any);
+              }}
+              accessibilityLabel="Abrir configurações"
+            >
+              <Text style={styles.iconButtonText}>⚙️</Text>
+            </Pressable>
+          </View>
+        </View>
 
-          {charsLoading ? (
-            <RPGCard style={{ padding: Spacing.md, alignItems: 'center' }}>
-              <Text style={{ color: theme.textSecondary }}>Carregando grimório de heróis...</Text>
-            </RPGCard>
-          ) : (
-            <View style={styles.characterGrid}>
-              {characters.map((char) => {
-                const isActive = activeCharacter?.id === char.id;
-                return (
-                  <RPGCard
-                    key={char.id}
-                    variant={isActive ? 'highlight' : 'default'}
-                    style={[
-                      styles.charCard,
-                      isActive && { borderColor: theme.primary, borderWidth: 1.5 },
-                    ]}
-                  >
-                    <View style={styles.charHeaderRow}>
-                      <Text style={styles.charEmoji}>{char.avatarEmoji}</Text>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.charName, { color: theme.text }]}>{char.name}</Text>
-                        <Text style={[styles.charSubtitle, { color: theme.textSecondary }]}>
-                          {char.race} • {char.class} Nível {char.level} {char.subclass ? `(${char.subclass})` : ''}
-                        </Text>
-                      </View>
-                      {isActive ? (
-                        <RPGBadge label="ATIVO 👑" variant="gold" size="sm" />
-                      ) : null}
-                    </View>
-
-                    {/* Chips de Combate */}
-                    <View style={styles.charStatsRow}>
-                      <View style={[styles.statBadge, { backgroundColor: `${theme.hp}15`, borderColor: theme.hp }]}>
-                        <Text style={[styles.statLabel, { color: theme.hp }]}>PV</Text>
-                        <Text style={[styles.statValue, { color: theme.text }]}>
-                          {char.currentHp}/{char.maxHp}
-                        </Text>
-                      </View>
-                      <View style={[styles.statBadge, { backgroundColor: `${theme.armor}15`, borderColor: theme.armor }]}>
-                        <Text style={[styles.statLabel, { color: theme.armor }]}>CA</Text>
-                        <Text style={[styles.statValue, { color: theme.text }]}>{char.armorClass}</Text>
-                      </View>
-                      <View style={[styles.statBadge, { backgroundColor: `${theme.mana}15`, borderColor: theme.mana }]}>
-                        <Text style={[styles.statLabel, { color: theme.mana }]}>DESL</Text>
-                        <Text style={[styles.statValue, { color: theme.text }]}>{char.speed}m</Text>
-                      </View>
-                      <View style={[styles.statBadge, { backgroundColor: `${theme.stamina}15`, borderColor: theme.stamina }]}>
-                        <Text style={[styles.statLabel, { color: theme.stamina }]}>INIC</Text>
-                        <Text style={[styles.statValue, { color: theme.text }]}>
-                          {char.initiative >= 0 ? `+${char.initiative}` : char.initiative}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* Resumo de Atributos */}
-                    <View style={[styles.attrRow, { backgroundColor: theme.backgroundInput }]}>
-                      <Text style={[styles.attrText, { color: theme.textSecondary }]}>
-                        FOR <Text style={{ color: theme.text, fontWeight: 'bold' }}>{char.attributes.strength}</Text>
-                      </Text>
-                      <Text style={[styles.attrText, { color: theme.textSecondary }]}>
-                        DES <Text style={{ color: theme.text, fontWeight: 'bold' }}>{char.attributes.dexterity}</Text>
-                      </Text>
-                      <Text style={[styles.attrText, { color: theme.textSecondary }]}>
-                        CON <Text style={{ color: theme.text, fontWeight: 'bold' }}>{char.attributes.constitution}</Text>
-                      </Text>
-                      <Text style={[styles.attrText, { color: theme.textSecondary }]}>
-                        INT <Text style={{ color: theme.text, fontWeight: 'bold' }}>{char.attributes.intelligence}</Text>
-                      </Text>
-                      <Text style={[styles.attrText, { color: theme.textSecondary }]}>
-                        SAB <Text style={{ color: theme.text, fontWeight: 'bold' }}>{char.attributes.wisdom}</Text>
-                      </Text>
-                      <Text style={[styles.attrText, { color: theme.textSecondary }]}>
-                        CAR <Text style={{ color: theme.text, fontWeight: 'bold' }}>{char.attributes.charisma}</Text>
-                      </Text>
-                    </View>
-
-                    <View style={{ flexDirection: 'row', gap: Spacing.xs, marginTop: Spacing.xs }}>
-                      <RPGButton
-                        title="⚔️ Ver Ficha"
-                        variant="primary"
-                        size="sm"
-                        icon="🛡️"
-                        onPress={() => router.push(`/character/${char.id}` as any)}
-                        style={{ flex: 1 }}
-                      />
-                      {!isActive ? (
-                        <RPGButton
-                          title="Tornar Ativo"
-                          variant="secondary"
-                          size="sm"
-                          onPress={() => setActiveCharacterId(char.id)}
-                          style={{ flex: 1 }}
-                        />
-                      ) : null}
-                    </View>
-                  </RPGCard>
-                );
-              })}
+        {/* Card de Sessão do Jogador / Boas-Vindas */}
+        {isAuthenticated && user ? (
+          <View
+            style={[
+              styles.userCard,
+              { backgroundColor: theme.backgroundCard, borderColor: theme.border },
+              Shadows.sm,
+            ]}
+          >
+            <View
+              style={[
+                styles.userAvatarBox,
+                { backgroundColor: `${theme.primary}20`, borderColor: theme.primary },
+              ]}
+            >
+              <Text style={styles.userAvatarEmoji}>
+                {user.role === 'master' ? '👑' : '🛡️'}
+              </Text>
             </View>
-          )}
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.userName, { color: theme.text }]}>
+                {user.name}
+              </Text>
+              <Text style={[styles.userRole, { color: theme.textSecondary }]}>
+                {user.role === 'master' ? 'Mestre da Masmorra' : 'Aventureiro'} • {user.email}
+              </Text>
+            </View>
+            <RPGButton
+              title="Sair"
+              variant="ghost"
+              size="sm"
+              onPress={logout}
+            />
+          </View>
+        ) : (
+          <RPGCard
+            variant="highlight"
+            style={[styles.guestCard, { borderColor: theme.primary }]}
+          >
+            <View style={styles.guestContent}>
+              <Text style={styles.guestIcon}>🏰</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.guestTitle, { color: theme.text }]}>
+                  Boas-vindas à Taverna!
+                </Text>
+                <Text style={[styles.guestSubtitle, { color: theme.textSecondary }]}>
+                  Conecte sua conta para sincronizar fichas, campanhas e rolagens.
+                </Text>
+              </View>
+            </View>
+            <View style={styles.guestActions}>
+              <RPGButton
+                title="Entrar"
+                variant="primary"
+                size="sm"
+                icon="🔐"
+                onPress={() => router.push('/auth/login' as any)}
+                style={{ flex: 1 }}
+              />
+              <RPGButton
+                title="Cadastrar"
+                variant="secondary"
+                size="sm"
+                icon="✨"
+                onPress={() => router.push('/auth/register' as any)}
+                style={{ flex: 1 }}
+              />
+            </View>
+          </RPGCard>
+        )}
 
-          <RPGButton
-            title="Restaurar Fichas Padrão do Mock (Reset)"
-            variant="ghost"
-            size="sm"
-            icon="🔄"
-            onPress={resetToMock}
-            style={{ alignSelf: 'center', marginTop: Spacing.xs }}
-          />
-        </View>
-
-        {/* Lista das 11 Telas Mapeadas */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>
-            🗺️ Grafo de Navegação — 11 Telas
-          </Text>
-          <View style={styles.screenList}>
-            {PLANNED_SCREENS.map((item) => (
-              <RPGCard
-                key={item.id}
-                variant={item.ready ? 'highlight' : 'default'}
-                style={styles.screenCard}
-                onPress={item.ready && item.route ? () => router.push(item.route as any) : undefined}
+        {/* Card do Personagem Ativo em Destaque */}
+        {activeCharacter ? (
+          <RPGCard variant="highlight" style={styles.activeHeroCard}>
+            <View style={styles.activeHeroHeader}>
+              <View
+                style={[
+                  styles.heroAvatarBox,
+                  { backgroundColor: `${theme.primary}20`, borderColor: theme.primary },
+                ]}
               >
-                <Text style={styles.screenIcon}>{item.icon}</Text>
-                <View style={styles.screenTextContainer}>
-                  <Text style={[styles.screenTitle, { color: theme.text }]}>{item.title}</Text>
-                  <Text style={[styles.screenDesc, { color: theme.textSecondary }]}>{item.desc}</Text>
+                <Text style={styles.heroAvatarEmoji}>
+                  {activeCharacter.avatarEmoji || '🛡️'}
+                </Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={styles.heroTitleRow}>
+                  <Text style={[styles.heroName, { color: theme.text }]}>
+                    {activeCharacter.name}
+                  </Text>
+                  <RPGBadge label="EM JOGO" variant="gold" size="sm" />
                 </View>
-                {item.ready ? (
-                  <RPGBadge label="PRONTA" variant="gold" size="sm" />
-                ) : null}
-              </RPGCard>
-            ))}
+                <Text style={[styles.heroClassRace, { color: theme.textSecondary }]}>
+                  {activeCharacter.race} • {activeCharacter.class} Nível {activeCharacter.level} {activeCharacter.subclass ? `(${activeCharacter.subclass})` : ''}
+                </Text>
+              </View>
+            </View>
+
+            {/* Barra de Pontos de Vida (PV) */}
+            <View style={{ width: '100%', marginTop: Spacing.xs }}>
+              <RPGHpBar
+                current={activeCharacter.currentHp}
+                max={activeCharacter.maxHp}
+                temp={activeCharacter.tempHp}
+                height={12}
+                label="PONTOS DE VIDA (PV)"
+              />
+            </View>
+
+            {/* Chips de Estatísticas Principais */}
+            <View style={styles.heroStatsRow}>
+              <View style={[styles.statChip, { backgroundColor: `${theme.armor}15`, borderColor: theme.armor }]}>
+                <Text style={[styles.statChipLabel, { color: theme.armor }]}>CA</Text>
+                <Text style={[styles.statChipVal, { color: theme.text }]}>
+                  {activeCharacter.armorClass}
+                </Text>
+              </View>
+
+              <View style={[styles.statChip, { backgroundColor: `${theme.stamina}15`, borderColor: theme.stamina }]}>
+                <Text style={[styles.statChipLabel, { color: theme.stamina }]}>INIC</Text>
+                <Text style={[styles.statChipVal, { color: theme.text }]}>
+                  {activeCharacter.initiative >= 0 ? `+${activeCharacter.initiative}` : activeCharacter.initiative}
+                </Text>
+              </View>
+
+              <View style={[styles.statChip, { backgroundColor: `${theme.mana}15`, borderColor: theme.mana }]}>
+                <Text style={[styles.statChipLabel, { color: theme.mana }]}>DESL</Text>
+                <Text style={[styles.statChipVal, { color: theme.text }]}>
+                  {activeCharacter.speed}m
+                </Text>
+              </View>
+
+              <View style={[styles.statChip, { backgroundColor: `${theme.primary}15`, borderColor: theme.primary }]}>
+                <Text style={[styles.statChipLabel, { color: theme.primary }]}>PROF</Text>
+                <Text style={[styles.statChipVal, { color: theme.text }]}>
+                  +{activeCharacter.proficiencyBonus || 2}
+                </Text>
+              </View>
+            </View>
+
+            {/* Ações Rápidas da Ficha Ativa */}
+            <View style={styles.heroActionGrid}>
+              <RPGButton
+                title="Abrir Ficha"
+                variant="primary"
+                size="sm"
+                icon="⚔️"
+                onPress={() => router.push(`/character/${activeCharacter.id}` as any)}
+                style={{ flex: 1 }}
+              />
+              <RPGButton
+                title="Rolar Dados"
+                variant="secondary"
+                size="sm"
+                icon="🎲"
+                onPress={() => router.push(`/character/${activeCharacter.id}/dice` as any)}
+                style={{ flex: 1 }}
+              />
+            </View>
+
+            {/* Botões Secundários em Pílula */}
+            <View style={styles.heroSecondaryActions}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.pillButton,
+                  {
+                    backgroundColor: theme.backgroundInput,
+                    borderColor: theme.border,
+                    opacity: pressed ? 0.7 : 1,
+                  },
+                ]}
+                onPress={() => router.push(`/character/${activeCharacter.id}/inventory` as any)}
+              >
+                <Text style={[styles.pillButtonText, { color: theme.text }]}>🎒 Inventário</Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.pillButton,
+                  {
+                    backgroundColor: theme.backgroundInput,
+                    borderColor: theme.border,
+                    opacity: pressed ? 0.7 : 1,
+                  },
+                ]}
+                onPress={() => router.push(`/character/${activeCharacter.id}/skills` as any)}
+              >
+                <Text style={[styles.pillButtonText, { color: theme.text }]}>🎯 Perícias</Text>
+              </Pressable>
+
+              {activeCharacter.spellcasting && activeCharacter.spellcasting.spells.length > 0 ? (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.pillButton,
+                    {
+                      backgroundColor: theme.backgroundInput,
+                      borderColor: theme.border,
+                      opacity: pressed ? 0.7 : 1,
+                    },
+                  ]}
+                  onPress={() => router.push(`/character/${activeCharacter.id}/spells` as any)}
+                >
+                  <Text style={[styles.pillButtonText, { color: theme.text }]}>🔮 Grimório</Text>
+                </Pressable>
+              ) : (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.pillButton,
+                    {
+                      backgroundColor: theme.backgroundInput,
+                      borderColor: theme.border,
+                      opacity: pressed ? 0.7 : 1,
+                    },
+                  ]}
+                  onPress={() => router.push(`/character/${activeCharacter.id}/bio` as any)}
+                >
+                  <Text style={[styles.pillButtonText, { color: theme.text }]}>📜 Biografia</Text>
+                </Pressable>
+              )}
+            </View>
+          </RPGCard>
+        ) : (
+          <RPGCard style={styles.noHeroCard}>
+            <Text style={styles.noHeroEmoji}>🧙‍♂️</Text>
+            <Text style={[styles.noHeroTitle, { color: theme.text }]}>
+              Nenhum Herói Selecionado
+            </Text>
+            <Text style={[styles.noHeroSubtitle, { color: theme.textSecondary }]}>
+              Crie seu primeiro aventureiro ou selecione uma ficha para começar a rolar dados e combater!
+            </Text>
+            <RPGButton
+              title="Criar Meu Primeiro Herói"
+              variant="primary"
+              icon="✨"
+              onPress={() => router.push('/create' as any)}
+              style={{ marginTop: Spacing.xs, width: '100%' }}
+            />
+          </RPGCard>
+        )}
+
+        {/* Central de Ações Rápidas (Grid 2x2) */}
+        <View style={styles.quickNavSection}>
+          <Text style={[styles.sectionHeading, { color: theme.text }]}>
+            🧭 Menu Principal
+          </Text>
+
+          <View style={styles.quickGrid}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.quickTile,
+                {
+                  backgroundColor: theme.backgroundCard,
+                  borderColor: theme.border,
+                  opacity: pressed ? 0.85 : 1,
+                  transform: [{ scale: pressed ? 0.98 : 1 }],
+                },
+                Shadows.sm,
+              ]}
+              onPress={() => {
+                rpgHapticSelection();
+                router.push('/characters' as any);
+              }}
+            >
+              <Text style={styles.quickTileIcon}>🛡️</Text>
+              <Text style={[styles.quickTileTitle, { color: theme.text }]}>
+                Personagens
+              </Text>
+              <Text style={[styles.quickTileDesc, { color: theme.textSecondary }]}>
+                {characters.length} fichas salvas
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.quickTile,
+                {
+                  backgroundColor: theme.backgroundCard,
+                  borderColor: theme.border,
+                  opacity: pressed ? 0.85 : 1,
+                  transform: [{ scale: pressed ? 0.98 : 1 }],
+                },
+                Shadows.sm,
+              ]}
+              onPress={() => {
+                rpgHapticSelection();
+                router.push('/create' as any);
+              }}
+            >
+              <Text style={styles.quickTileIcon}>✨</Text>
+              <Text style={[styles.quickTileTitle, { color: theme.text }]}>
+                Novo Herói
+              </Text>
+              <Text style={[styles.quickTileDesc, { color: theme.textSecondary }]}>
+                Criar ficha D&D 5e
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.quickTile,
+                {
+                  backgroundColor: theme.backgroundCard,
+                  borderColor: theme.border,
+                  opacity: pressed ? 0.85 : 1,
+                  transform: [{ scale: pressed ? 0.98 : 1 }],
+                },
+                Shadows.sm,
+              ]}
+              onPress={() => {
+                rpgHapticSelection();
+                router.push('/dice' as any);
+              }}
+            >
+              <Text style={styles.quickTileIcon}>🎲</Text>
+              <Text style={[styles.quickTileTitle, { color: theme.text }]}>
+                Rolador de Dados
+              </Text>
+              <Text style={[styles.quickTileDesc, { color: theme.textSecondary }]}>
+                d4 a d100 & testes
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.quickTile,
+                {
+                  backgroundColor: theme.backgroundCard,
+                  borderColor: theme.border,
+                  opacity: pressed ? 0.85 : 1,
+                  transform: [{ scale: pressed ? 0.98 : 1 }],
+                },
+                Shadows.sm,
+              ]}
+              onPress={() => {
+                rpgHapticSelection();
+                router.push('/settings' as any);
+              }}
+            >
+              <Text style={styles.quickTileIcon}>⚙️</Text>
+              <Text style={[styles.quickTileTitle, { color: theme.text }]}>
+                Configurações
+              </Text>
+              <Text style={[styles.quickTileDesc, { color: theme.textSecondary }]}>
+                Ajustes e backup
+              </Text>
+            </Pressable>
           </View>
         </View>
 
-        {/* Checklist do Repositório (Slide 17 da Aula 5) */}
-        <RPGCard style={styles.checklistCard}>
-          <Text style={[styles.checklistTitle, { color: theme.text }]}>
-            ✅ Checklist do Repositório (Prof. Garrido)
-          </Text>
-          <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commits 01 a 22 concluídos e sincronizados no GitHub
-          </Text>
-          <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Commit 23 pronto: Polimento visual, sombras temáticas (Shadows) e microinterações táteis nas 12 telas (v0.23.0)
-          </Text>
-          <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ META DE 20 COMMITS SUPERADA! (23 commits com arquitetura em 3 camadas e 12 telas)
-          </Text>
-          <Text style={[styles.checkItem, { color: theme.healing }]}>
-            ✔ Próximo: Commit 24 — Finalização de documentação completa, capturas de tela e entrega final (v1.0.0)
+        {/* Grupo de Aventureiros / Lista Rápida */}
+        <View style={styles.partySection}>
+          <View style={styles.partyHeaderRow}>
+            <Text style={[styles.sectionHeading, { color: theme.text }]}>
+              👥 Grupo de Aventureiros
+            </Text>
+            <Pressable onPress={() => router.push('/characters' as any)}>
+              <Text style={[styles.seeAllText, { color: theme.primary }]}>
+                Ver todos ({characters.length}) ➔
+              </Text>
+            </Pressable>
+          </View>
+
+          {characters.slice(0, 3).map((char) => {
+            const isActive = activeCharacter?.id === char.id;
+            return (
+              <Pressable
+                key={char.id}
+                style={({ pressed }) => [
+                  styles.rosterCard,
+                  {
+                    backgroundColor: theme.backgroundCard,
+                    borderColor: isActive ? theme.primary : theme.border,
+                    borderWidth: isActive ? 1.5 : 1,
+                    opacity: pressed ? 0.92 : 1,
+                  },
+                  isActive ? Shadows.glowGold : Shadows.sm,
+                ]}
+                onPress={() => {
+                  rpgHapticSelection();
+                  router.push(`/character/${char.id}` as any);
+                }}
+              >
+                <Text style={styles.rosterEmoji}>{char.avatarEmoji || '🛡️'}</Text>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={[styles.rosterName, { color: theme.text }]}>
+                      {char.name}
+                    </Text>
+                    {isActive ? (
+                      <RPGBadge label="ATIVO" variant="gold" size="sm" />
+                    ) : null}
+                  </View>
+                  <Text style={[styles.rosterSub, { color: theme.textSecondary }]}>
+                    {char.race} • {char.class} Nv. {char.level}
+                  </Text>
+                </View>
+
+                <View style={styles.rosterStats}>
+                  <Text style={[styles.rosterHpText, { color: theme.hp }]}>
+                    ❤️ {char.currentHp}/{char.maxHp}
+                  </Text>
+                  <Text style={[styles.rosterCaText, { color: theme.armor }]}>
+                    🛡️ {char.armorClass} CA
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* Pergaminho do Conhecimento / Dica do Mestre */}
+        <RPGCard variant="default" style={styles.loreCard}>
+          <View style={styles.loreHeader}>
+            <Text style={styles.loreIcon}>📜</Text>
+            <Text style={[styles.loreTitle, { color: theme.text }]}>
+              Dica do Mestre da Masmorra
+            </Text>
+          </View>
+          <Text style={[styles.loreBody, { color: theme.textSecondary }]}>
+            Em combates difíceis, lembre-se de usar a rolagem com <Text style={{ color: theme.primary, fontWeight: 'bold' }}>Vantagem</Text> quando seu aliado flanquear o inimigo ou quando tiver terreno elevado a seu favor!
           </Text>
         </RPGCard>
+
+        {/* Rodapé Elegante */}
+        <View style={styles.footer}>
+          <Text style={[styles.footerText, { color: theme.textMuted }]}>
+            QuestSheet RPG • Suas campanhas na palma da mão
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -442,206 +521,293 @@ const styles = StyleSheet.create({
   container: {
     padding: Spacing.md,
     gap: Spacing.md,
+    paddingBottom: Spacing.xl,
   },
-  academicBanner: {
-    borderRadius: Radius.md,
-    padding: Spacing.sm + 4,
-    borderLeftWidth: 4,
-    borderWidth: 1,
-    gap: 4,
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.xs,
   },
-  institutionText: {
-    fontSize: 10,
-    fontWeight: 'bold',
+  appTitle: {
+    fontSize: 22,
+    fontWeight: '900',
     letterSpacing: 0.5,
   },
-  courseText: {
+  appTagline: {
     fontSize: 12,
+    marginTop: 2,
   },
-  authorHighlight: {
-    fontSize: 13,
+  headerActions: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
+  iconButton: {
+    width: 42,
+    height: 42,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconButtonText: {
+    fontSize: 18,
+  },
+  userCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.sm + 2,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    gap: Spacing.sm,
+  },
+  userAvatarBox: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userAvatarEmoji: {
+    fontSize: 20,
+  },
+  userName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  userRole: {
+    fontSize: 11,
+    marginTop: 1,
+  },
+  guestCard: {
+    gap: Spacing.sm,
+  },
+  guestContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  guestIcon: {
+    fontSize: 28,
+  },
+  guestTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  guestSubtitle: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  guestActions: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
+  activeHeroCard: {
+    gap: Spacing.sm,
+  },
+  activeHeroHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  heroAvatarBox: {
+    width: 52,
+    height: 52,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroAvatarEmoji: {
+    fontSize: 30,
+  },
+  heroTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.xs,
+  },
+  heroName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  heroClassRace: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  heroStatsRow: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    width: '100%',
+    marginTop: 2,
+  },
+  statChip: {
+    flex: 1,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  statChipLabel: {
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  statChipVal: {
+    fontSize: 14,
     fontWeight: 'bold',
     marginTop: 2,
   },
-  heroCard: {
-    alignItems: 'center',
-    gap: Spacing.sm,
+  heroActionGrid: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    width: '100%',
+    marginTop: Spacing.xs,
   },
-  heroTitle: {
-    fontSize: 26,
+  heroSecondaryActions: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    width: '100%',
+    marginTop: 2,
+  },
+  pillButton: {
+    flex: 1,
+    paddingVertical: 7,
+    paddingHorizontal: 6,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pillButtonText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  noHeroCard: {
+    alignItems: 'center',
+    padding: Spacing.lg,
+    gap: Spacing.xs,
+  },
+  noHeroEmoji: {
+    fontSize: 40,
+    marginBottom: 4,
+  },
+  noHeroTitle: {
+    fontSize: 17,
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  heroSubtitle: {
+  noHeroSubtitle: {
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
   },
-  sessionBox: {
-    width: '100%',
-    padding: Spacing.sm + 4,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    marginVertical: Spacing.xs,
-  },
-  sessionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  sessionGreeting: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  sessionEmail: {
-    fontSize: 11,
-  },
-  tagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    justifyContent: 'center',
+  quickNavSection: {
+    gap: Spacing.xs + 2,
     marginTop: Spacing.xs,
   },
-  actionCard: {
-    gap: Spacing.sm,
-  },
-  actionTitle: {
-    fontSize: 15,
+  sectionHeading: {
+    fontSize: 16,
     fontWeight: 'bold',
   },
-  actionDesc: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  actionBtnRow: {
+  quickGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  quickTile: {
+    width: '48%',
+    flexGrow: 1,
+    padding: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    gap: 4,
+  },
+  quickTileIcon: {
+    fontSize: 26,
+    marginBottom: 2,
+  },
+  quickTileTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  quickTileDesc: {
+    fontSize: 11,
+  },
+  partySection: {
+    gap: Spacing.xs + 2,
+    marginTop: Spacing.xs,
+  },
+  partyHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  seeAllText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  rosterCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.sm + 2,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    gap: Spacing.sm,
+  },
+  rosterEmoji: {
+    fontSize: 26,
+  },
+  rosterName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  rosterSub: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  rosterStats: {
+    alignItems: 'flex-end',
+    gap: 2,
+  },
+  rosterHpText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  rosterCaText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  loreCard: {
     gap: Spacing.xs,
     marginTop: Spacing.xs,
   },
-  section: {
-    gap: 10,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-  },
-  layerContainer: {
-    gap: 8,
-  },
-  layerCard: {
-    padding: 12,
-  },
-  layerIcon: {
-    fontSize: 20,
-    marginBottom: 4,
-  },
-  layerTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 2,
-  },
-  layerDesc: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  screenList: {
-    gap: 8,
-  },
-  screenCard: {
+  loreHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    padding: 12,
+    gap: Spacing.xs,
   },
-  screenIcon: {
-    fontSize: 22,
+  loreIcon: {
+    fontSize: 18,
   },
-  screenTextContainer: {
-    flex: 1,
-  },
-  screenTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  screenDesc: {
-    fontSize: 11,
-    lineHeight: 15,
-  },
-  checklistCard: {
-    padding: Spacing.md,
-    gap: 6,
-  },
-  checklistTitle: {
-    fontSize: 14,
+  loreTitle: {
+    fontSize: 13,
     fontWeight: 'bold',
-    marginBottom: 4,
   },
-  checkItem: {
+  loreBody: {
     fontSize: 12,
     lineHeight: 18,
   },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  footer: {
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.md,
   },
-  sectionSubtitle: {
-    fontSize: 12,
-    marginTop: -4,
-    marginBottom: 2,
-  },
-  characterGrid: {
-    gap: 10,
-  },
-  charCard: {
-    padding: 12,
-    gap: 8,
-  },
-  charHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  charEmoji: {
-    fontSize: 28,
-  },
-  charName: {
-    fontSize: 15,
-    fontWeight: 'bold',
-  },
-  charSubtitle: {
-    fontSize: 12,
-  },
-  charStatsRow: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  statBadge: {
-    flex: 1,
-    paddingVertical: 4,
-    paddingHorizontal: 6,
-    borderRadius: Radius.sm,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  statLabel: {
-    fontSize: 9,
-    fontWeight: 'bold',
-  },
-  statValue: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  attrRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: Radius.sm,
-  },
-  attrText: {
+  footerText: {
     fontSize: 11,
+    letterSpacing: 0.3,
   },
 });

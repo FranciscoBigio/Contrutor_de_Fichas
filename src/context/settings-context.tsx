@@ -110,3 +110,4 @@ export function useSettings(): SettingsContextData {
   }
   return context;
 }
+
