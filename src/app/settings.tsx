@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import {
   Alert,
   Modal,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Switch,
@@ -11,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   RPGBadge,
@@ -515,7 +515,7 @@ export default function SettingsScreen() {
             Disciplina: Aplicativos Híbridos{'\n'}
             Professor: <Text style={{ color: theme.text, fontWeight: 'bold' }}>Márcio Garrido</Text>{'\n'}
             Aluno: <Text style={{ color: theme.primary, fontWeight: 'bold' }}>Francisco Bigio</Text>{'\n'}
-            Versão: <Text style={{ color: theme.textGold, fontWeight: 'bold' }}>v0.23.3</Text> • Expo SDK 57 / React Native 0.86
+            Versão: <Text style={{ color: theme.textGold, fontWeight: 'bold' }}>v1.0.0 (Release Final)</Text> • Expo SDK 57 / React Native 0.86
           </Text>
 
           <View style={styles.techTagsRow}>
@@ -523,7 +523,7 @@ export default function SettingsScreen() {
             <RPGBadge label="AsyncStorage" variant="stamina" size="sm" />
             <RPGBadge label="SecureStore" variant="gold" size="sm" />
             <RPGBadge label="Backup JSON" variant="arcane" size="sm" />
-            <RPGBadge label="12 Telas Concluídas" variant="hp" size="sm" />
+            <RPGBadge label="v1.0.0 Final" variant="hp" size="sm" />
           </View>
         </RPGCard>
 
