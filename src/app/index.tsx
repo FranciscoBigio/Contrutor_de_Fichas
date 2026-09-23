@@ -32,6 +32,7 @@ const PLANNED_SCREENS = [
   { id: '9', title: '9. Inventário & Equipamentos (PRONTA)', desc: 'Mochila, armas com rolagem de dano, bolsa de 5 moedas (PO/PP/PC) e capacidade de carga D&D 5e', icon: '🎒', ready: true, route: '/character/hero-1/inventory' },
   { id: '10', title: '10. Biografia & Habilidades (PRONTA)', desc: 'História, características de raça/classe, traços de personalidade, ideais, vínculos, defeitos e notas', icon: '📜', ready: true, route: '/character/hero-1/bio' },
   { id: '11', title: '11. Rolador de Dados Integrado (PRONTA)', desc: 'Rolagens poliédricas (d4 a d100), testes rápidos de atributos, vantagem/desvantagem, críticos e histórico', icon: '🎲', ready: true, route: '/dice' },
+  { id: '12', title: '12. Configurações & Preferências (PRONTA)', desc: 'Persistência no AsyncStorage, temas, haptics, regras de sobrecarga e backup JSON', icon: '⚙️', ready: true, route: '/settings' },
 ];
 
 export default function HomeScreen() {
@@ -67,12 +68,12 @@ export default function HomeScreen() {
 
         {/* Hero Card do Projeto */}
         <RPGCard variant="highlight" style={styles.heroCard}>
-          <RPGBadge label="COMMIT #23 • v0.23.0 • POLIMENTO VISUAL & MICROINTERAÇÕES" variant="gold" />
+          <RPGBadge label="COMMIT #23.1 • v0.23.1 • CORREÇÃO & PERSISTÊNCIA DE CONFIGURAÇÕES" variant="gold" />
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             ⚔️ QuestSheet RPG
           </Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            Auras de sombras temáticas (Shadows), foco iluminado em inputs, brilho semântico em barras de PV e microinterações táteis nas 12 telas!
+            Configurações globais salvas no AsyncStorage com SettingsContext, feedback tátil sincronizado e 12 telas 100% integradas!
           </Text>
 
           {/* Card de Sessão do Usuário */}
@@ -132,8 +133,8 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.tagRow}>
-            <RPGBadge label="SemVer v0.23.0" variant="hp" size="sm" />
-            <RPGBadge label="23 Commits Concluídos" variant="mana" size="sm" />
+            <RPGBadge label="SemVer v0.23.1" variant="hp" size="sm" />
+            <RPGBadge label="23+ Commits Concluídos" variant="mana" size="sm" />
             <RPGBadge label="Sombras & Auras" variant="gold" size="sm" />
           </View>
         </RPGCard>

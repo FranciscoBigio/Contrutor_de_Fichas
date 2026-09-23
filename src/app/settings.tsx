@@ -20,6 +20,7 @@ import {
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import { useCharacters } from '@/context/character-context';
+import { useSettings } from '@/context/settings-context';
 import { useTheme } from '@/context/theme-context';
 
 export default function SettingsScreen() {
@@ -33,12 +34,8 @@ export default function SettingsScreen() {
     importCharacterFromJson,
   } = useCharacters();
 
-  // Preferências de Jogo e Interface (Estado Local)
-  const [hapticFeedback, setHapticFeedback] = useState<boolean>(true);
-  const [diceSoundEffects, setDiceSoundEffects] = useState<boolean>(true);
-  const [encumbranceRule, setEncumbranceRule] = useState<boolean>(true);
-  const [confirmActions, setConfirmActions] = useState<boolean>(false);
-  const [autoDeathSave, setAutoDeathSave] = useState<boolean>(true);
+  // Preferências de Jogo e Interface persistidas via SettingsContext (AsyncStorage)
+  const { settings, updateSetting, resetSettings } = useSettings();
 
   // Estados dos Modais de Backup JSON
   const [isExportModalVisible, setIsExportModalVisible] = useState<boolean>(false);
@@ -303,11 +300,17 @@ export default function SettingsScreen() {
         {/* Seção 3: Preferências de Jogo & Rolagem */}
         <RPGCard variant="default" style={styles.sectionCard}>
           <View style={styles.sectionTitleRow}>
-            <Text style={styles.sectionEmoji}>🎲</Text>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>
-              Preferências de Jogo
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+              <Text style={styles.sectionEmoji}>🎲</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                Preferências de Jogo
+              </Text>
+            </View>
+            <RPGBadge label="💾 SALVAMENTO ATIVO" variant="gold" size="sm" />
           </View>
+          <Text style={[styles.settingDesc, { color: theme.textSecondary, marginBottom: 4 }]}>
+            Todas as alterações abaixo são salvas automaticamente no armazenamento local (AsyncStorage):
+          </Text>
 
           <View style={[styles.settingRow, { borderBottomColor: theme.border }]}>
             <View style={{ flex: 1, marginRight: Spacing.sm }}>
@@ -319,9 +322,10 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Switch
-              value={hapticFeedback}
-              onValueChange={setHapticFeedback}
+              value={settings.hapticFeedback}
+              onValueChange={(val) => updateSetting('hapticFeedback', val)}
               trackColor={{ false: theme.border, true: theme.primary }}
+              thumbColor={settings.hapticFeedback ? '#FFFFFF' : '#8C6D15'}
             />
           </View>
 
@@ -335,9 +339,10 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Switch
-              value={diceSoundEffects}
-              onValueChange={setDiceSoundEffects}
+              value={settings.diceSoundEffects}
+              onValueChange={(val) => updateSetting('diceSoundEffects', val)}
               trackColor={{ false: theme.border, true: theme.primary }}
+              thumbColor={settings.diceSoundEffects ? '#FFFFFF' : '#8C6D15'}
             />
           </View>
 
@@ -351,9 +356,10 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Switch
-              value={encumbranceRule}
-              onValueChange={setEncumbranceRule}
+              value={settings.encumbranceRule}
+              onValueChange={(val) => updateSetting('encumbranceRule', val)}
               trackColor={{ false: theme.border, true: theme.primary }}
+              thumbColor={settings.encumbranceRule ? '#FFFFFF' : '#8C6D15'}
             />
           </View>
 
@@ -367,13 +373,14 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Switch
-              value={autoDeathSave}
-              onValueChange={setAutoDeathSave}
+              value={settings.autoDeathSave}
+              onValueChange={(val) => updateSetting('autoDeathSave', val)}
               trackColor={{ false: theme.border, true: theme.primary }}
+              thumbColor={settings.autoDeathSave ? '#FFFFFF' : '#8C6D15'}
             />
           </View>
 
-          <View style={styles.settingRow}>
+          <View style={[styles.settingRow, { borderBottomColor: theme.border }]}>
             <View style={{ flex: 1, marginRight: Spacing.sm }}>
               <Text style={[styles.settingLabel, { color: theme.text }]}>
                 Confirmar Ações Críticas de Combate
@@ -383,11 +390,29 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Switch
-              value={confirmActions}
-              onValueChange={setConfirmActions}
+              value={settings.confirmActions}
+              onValueChange={(val) => updateSetting('confirmActions', val)}
               trackColor={{ false: theme.border, true: theme.primary }}
+              thumbColor={settings.confirmActions ? '#FFFFFF' : '#8C6D15'}
             />
           </View>
+
+          <RPGButton
+            title="↺ Restaurar Preferências Originais"
+            variant="ghost"
+            size="sm"
+            onPress={() => {
+              Alert.alert(
+                'Restaurar Preferências',
+                'Deseja redefinir as configurações para os padrões de fábrica?',
+                [
+                  { text: 'Cancelar', style: 'cancel' },
+                  { text: 'Restaurar', onPress: resetSettings },
+                ]
+              );
+            }}
+            style={{ marginTop: Spacing.xs }}
+          />
         </RPGCard>
 
         {/* Seção 4: Backup & Troca de Fichas (JSON) */}

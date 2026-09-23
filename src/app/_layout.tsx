@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import { AuthProvider } from '@/context/auth-context';
 import { CharacterProvider } from '@/context/character-context';
+import { SettingsProvider } from '@/context/settings-context';
 import { ThemeProvider, useTheme } from '@/context/theme-context';
 
 function RootNavigator() {
@@ -130,11 +131,13 @@ function RootNavigator() {
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <CharacterProvider>
-          <RootNavigator />
-        </CharacterProvider>
-      </AuthProvider>
+      <SettingsProvider>
+        <AuthProvider>
+          <CharacterProvider>
+            <RootNavigator />
+          </CharacterProvider>
+        </AuthProvider>
+      </SettingsProvider>
     </ThemeProvider>
   );
 }

@@ -4,16 +4,32 @@ import { Platform } from 'react-native';
 /**
  * Utilitário central de Feedback Háptico e Resposta Tátil para o QuestSheet RPG.
  * Proporciona imersão tátil durante rolagens de dados, acertos críticos, dano e cura,
- * com salvaguardas seguras contra erros em navegadores Web e emuladores.
+ * com salvaguardas seguras contra erros em navegadores Web e emuladores,
+ * além de respeitar a preferência ativada/desativada nas Configurações do app.
  */
 
 const isHapticsSupported = Platform.OS === 'ios' || Platform.OS === 'android';
+let isHapticsGloballyEnabled = true;
+
+/**
+ * Ativa ou desativa as vibrações com base nas Configurações persistidas
+ */
+export function setHapticsEnabled(enabled: boolean): void {
+  isHapticsGloballyEnabled = enabled;
+}
+
+/**
+ * Consulta se os hápticos estão ativos
+ */
+export function isHapticsEnabled(): boolean {
+  return isHapticsSupported && isHapticsGloballyEnabled;
+}
 
 /**
  * Vibração leve de seleção ao trocar de dado ou alternar abas
  */
 export async function rpgHapticSelection(): Promise<void> {
-  if (!isHapticsSupported) return;
+  if (!isHapticsSupported || !isHapticsGloballyEnabled) return;
   try {
     await Haptics.selectionAsync();
   } catch {
@@ -25,7 +41,7 @@ export async function rpgHapticSelection(): Promise<void> {
  * Impacto de impacto moderado ao rolar dados poliédricos comuns
  */
 export async function rpgHapticRoll(): Promise<void> {
-  if (!isHapticsSupported) return;
+  if (!isHapticsSupported || !isHapticsGloballyEnabled) return;
   try {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   } catch {
@@ -37,7 +53,7 @@ export async function rpgHapticRoll(): Promise<void> {
  * Vibração dupla festiva para Acerto Crítico (20 Natural no d20)
  */
 export async function rpgHapticCriticalSuccess(): Promise<void> {
-  if (!isHapticsSupported) return;
+  if (!isHapticsSupported || !isHapticsGloballyEnabled) return;
   try {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   } catch {
@@ -49,7 +65,7 @@ export async function rpgHapticCriticalSuccess(): Promise<void> {
  * Vibração pesada de advertência para Falha Crítica (1 Natural no d20)
  */
 export async function rpgHapticCriticalFailure(): Promise<void> {
-  if (!isHapticsSupported) return;
+  if (!isHapticsSupported || !isHapticsGloballyEnabled) return;
   try {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
   } catch {
@@ -61,7 +77,7 @@ export async function rpgHapticCriticalFailure(): Promise<void> {
  * Impacto forte ao receber Dano em combate
  */
 export async function rpgHapticDamage(): Promise<void> {
-  if (!isHapticsSupported) return;
+  if (!isHapticsSupported || !isHapticsGloballyEnabled) return;
   try {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
   } catch {
@@ -73,7 +89,7 @@ export async function rpgHapticDamage(): Promise<void> {
  * Pulso suave e restaurador ao receber Cura ou Descanso
  */
 export async function rpgHapticHeal(): Promise<void> {
-  if (!isHapticsSupported) return;
+  if (!isHapticsSupported || !isHapticsGloballyEnabled) return;
   try {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   } catch {
@@ -85,11 +101,10 @@ export async function rpgHapticHeal(): Promise<void> {
  * Toque tátil sutil para botões e ações de menu
  */
 export async function rpgHapticButton(): Promise<void> {
-  if (!isHapticsSupported) return;
+  if (!isHapticsSupported || !isHapticsGloballyEnabled) return;
   try {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   } catch {
     // Ignora silenciosamente
   }
 }
-

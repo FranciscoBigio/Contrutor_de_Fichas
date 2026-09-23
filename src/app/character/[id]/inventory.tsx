@@ -19,6 +19,7 @@ import {
 } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useCharacters } from '@/context/character-context';
+import { useSettings } from '@/context/settings-context';
 import { useTheme } from '@/context/theme-context';
 import {
   Coins,
@@ -59,6 +60,7 @@ export default function CharacterInventoryScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme } = useTheme();
+  const { settings } = useSettings();
   const {
     getCharacterById,
     activeCharacter,
@@ -216,7 +218,8 @@ export default function CharacterInventoryScreen() {
 
   // Helpers de Carga
   const isOverburdened = currentWeight > maxCapacity;
-  const isHeavyEncumbered = currentWeight > heavyEncumbrance && !isOverburdened;
+  const isHeavyEncumbered =
+    settings.encumbranceRule && currentWeight > heavyEncumbrance && !isOverburdened;
 
   const capacityColor = isOverburdened
     ? theme.hp
